@@ -15,9 +15,15 @@ export default function NotificationsDropdown() {
 
   const dropdownRef = useRef(null);
 
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.is_read).length,
+  const socialNotifications = useMemo(
+    () => notifications.filter((notification) => notification.type !== "message"),
     [notifications]
+  );
+
+  const unreadCount = useMemo(
+    () =>
+      socialNotifications.filter((notification) => !notification.is_read).length,
+    [socialNotifications]
   );
 
   const fetchNotifications = async () => {
@@ -111,11 +117,15 @@ export default function NotificationsDropdown() {
       await api.post("/api/notifications/read-all");
 
       setNotifications((prev) =>
-        prev.map((notification) => ({
-          ...notification,
-          is_read: true,
-          read_at: notification.read_at || new Date().toISOString(),
-        }))
+        prev.map((notification) =>
+          notification.type === "message"
+            ? notification
+            : {
+                ...notification,
+                is_read: true,
+                read_at: notification.read_at || new Date().toISOString(),
+              }
+        )
       );
     } catch (error) {
       console.error("Erreur lecture de toutes les notifications :", error);
@@ -172,12 +182,12 @@ export default function NotificationsDropdown() {
               <div className="px-3 py-8 text-center text-sm text-[var(--text-secondary)]">
                 Chargement des notifications...
               </div>
-            ) : notifications.length === 0 ? (
+            ) : socialNotifications.length === 0 ? (
               <div className="px-3 py-8 text-center text-sm text-[var(--text-secondary)]">
                 Aucune notification pour le moment.
               </div>
             ) : (
-              notifications.map((notification) => (
+              socialNotifications.map((notification) => (
                 <NotificationItem
                   key={notification.id}
                   notification={notification}
