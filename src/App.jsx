@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router";
+import ScrollToTop from "./components/ScroolToTop";
 
 import AuthLayout from "./layouts/AuthLayout";
 import AppLayout from "./layouts/AppLayout";
@@ -23,38 +24,43 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={
-          isAuthenticated ? (
-            <Navigate to="/feed" replace />
-          ) : (
-            <Navigate to="/login" replace />
-          )
-        }
-      />
+    <>
+      {/* 🔥 ICI */}
+      <ScrollToTop />
 
-      <Route
-        element={
-          isAuthenticated ? <Navigate to="/feed" replace /> : <AuthLayout />
-        }
-      >
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-      </Route>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/feed" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
 
-      <Route
-        element={
-          isAuthenticated ? <AppLayout /> : <Navigate to="/login" replace />
-        }
-      >
-        <Route path="/feed" element={<FeedPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/profile/edit" element={<EditProfilePage />} />
-      </Route>
+        <Route
+          element={
+            isAuthenticated ? <Navigate to="/feed" replace /> : <AuthLayout />
+          }
+        >
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route
+          element={
+            isAuthenticated ? <AppLayout /> : <Navigate to="/login" replace />
+          }
+        >
+          <Route path="/feed" element={<FeedPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/edit" element={<EditProfilePage />} />
+        </Route>
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
