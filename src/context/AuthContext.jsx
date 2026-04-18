@@ -7,20 +7,24 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
-  const fetchUser = async () => {
+  const refreshUser = async () => {
     try {
       const response = await api.get("/api/user");
-      console.log("USER OK", response.data);
       setUser(response.data);
-    } catch {
+      return response.data;
+    } catch (error) {
       setUser(null);
-    } finally {
-      setAuthLoading(false);
+      return null;
     }
   };
 
   useEffect(() => {
-    fetchUser();
+    const initAuth = async () => {
+      await refreshUser();
+      setAuthLoading(false);
+    };
+
+    initAuth();
   }, []);
 
   const register = async (payload) => {
@@ -50,7 +54,7 @@ export function AuthProvider({ children }) {
       register,
       login,
       logout,
-      refreshUser: fetchUser,
+      refreshUser,
     }),
     [user, authLoading]
   );

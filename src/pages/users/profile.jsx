@@ -1,4 +1,13 @@
-import { CalendarDays, Mail, Trophy, Users, Swords, Gamepad2 } from "lucide-react";
+import {
+  CalendarDays,
+  Mail,
+  Trophy,
+  Users,
+  Swords,
+  Gamepad2,
+  MapPin,
+  UserRound,
+} from "lucide-react";
 import { Link } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 
@@ -15,6 +24,29 @@ export default function ProfilePage() {
       ? `${user.name[0]}${user.surname[0]}`.toUpperCase()
       : user?.username?.slice(0, 2).toUpperCase() || "U";
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "Non renseignée";
+
+    const date = new Date(dateString);
+
+    return new Intl.DateTimeFormat("fr-BE", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(date);
+  };
+
+  const memberSince = (dateString) => {
+    if (!dateString) return "Non renseigné";
+
+    const date = new Date(dateString);
+
+    return new Intl.DateTimeFormat("fr-BE", {
+      month: "long",
+      year: "numeric",
+    }).format(date);
+  };
+
   return (
     <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="space-y-6">
@@ -22,7 +54,7 @@ export default function ProfilePage() {
           <div className="h-40 bg-gradient-to-r from-[var(--primary)] to-purple-500" />
 
           <div className="px-6 pb-6">
-            <div className="-mt-12 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="-mt-12 pt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div className="flex items-end gap-4">
                 <div className="flex h-24 w-24 items-center justify-center rounded-3xl border-4 border-[var(--bg-card)] bg-[var(--bg-main)] text-2xl font-bold text-[var(--text-main)] shadow-sm">
                   {initials}
@@ -41,26 +73,32 @@ export default function ProfilePage() {
               <Link
                 to="/profile/edit"
                 className="inline-flex items-center justify-center rounded-2xl bg-[var(--primary)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--primary-hover)]"
-                >
+              >
                 Modifier le profil
-                </Link>
+              </Link>
             </div>
 
             <p className="mt-5 max-w-2xl text-sm leading-7 text-[var(--text-secondary)]">
-              Joueur passionné, toujours à la recherche de nouvelles teams, de
-              groupes actifs et de bonnes sessions gaming. Cette section pourra
-              accueillir plus tard une vraie bio utilisateur.
+              {user?.biography?.trim()
+                ? user.biography
+                : "Aucune biographie renseignée pour le moment."}
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              <span className="rounded-full border border-[var(--border-color)] bg-[var(--bg-main)] px-4 py-2 text-sm text-[var(--text-main)]">
-                FPS
+              {user?.location && (
+                <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--bg-main)] px-4 py-2 text-sm text-[var(--text-main)]">
+                  <MapPin size={14} />
+                  {user.location}
+                </span>
+              )}
+
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--bg-main)] px-4 py-2 text-sm text-[var(--text-main)]">
+                <UserRound size={14} />
+                Membre depuis {memberSince(user?.created_at)}
               </span>
+
               <span className="rounded-full border border-[var(--border-color)] bg-[var(--bg-main)] px-4 py-2 text-sm text-[var(--text-main)]">
-                Ranked
-              </span>
-              <span className="rounded-full border border-[var(--border-color)] bg-[var(--bg-main)] px-4 py-2 text-sm text-[var(--text-main)]">
-                Teamplay
+                {user?.newsletter ? "Newsletter activée" : "Newsletter désactivée"}
               </span>
             </div>
           </div>
@@ -81,7 +119,7 @@ export default function ProfilePage() {
                       Email
                     </span>
                   </div>
-                  <p className="mt-3 text-sm text-[var(--text-secondary)]">
+                  <p className="mt-3 break-all text-sm text-[var(--text-secondary)]">
                     {user?.email || "Non renseigné"}
                   </p>
                 </div>
@@ -97,7 +135,19 @@ export default function ProfilePage() {
                     </span>
                   </div>
                   <p className="mt-3 text-sm text-[var(--text-secondary)]">
-                    {user?.birthday || "Non renseignée"}
+                    {formatDate(user?.birthday)}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[var(--bg-main)] p-4">
+                  <div className="flex items-center gap-3">
+                    <MapPin size={18} className="text-[var(--text-secondary)]" />
+                    <span className="text-sm font-medium text-[var(--text-main)]">
+                      Localisation
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm text-[var(--text-secondary)]">
+                    {user?.location || "Non renseignée"}
                   </p>
                 </div>
 
@@ -108,23 +158,11 @@ export default function ProfilePage() {
                       className="text-[var(--text-secondary)]"
                     />
                     <span className="text-sm font-medium text-[var(--text-main)]">
-                      Jeu principal
+                      Compte
                     </span>
                   </div>
                   <p className="mt-3 text-sm text-[var(--text-secondary)]">
-                    Valorant
-                  </p>
-                </div>
-
-                <div className="rounded-2xl bg-[var(--bg-main)] p-4">
-                  <div className="flex items-center gap-3">
-                    <Trophy size={18} className="text-[var(--text-secondary)]" />
-                    <span className="text-sm font-medium text-[var(--text-main)]">
-                      Niveau
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm text-[var(--text-secondary)]">
-                    Compétitif
+                    {user?.is_admin ? "Administrateur" : "Utilisateur"}
                   </p>
                 </div>
               </div>
@@ -136,10 +174,9 @@ export default function ProfilePage() {
               </h2>
 
               <p className="mt-4 text-sm leading-7 text-[var(--text-secondary)]">
-                Ici tu pourras afficher plus tard une vraie bio, les plateformes
-                du joueur, ses disponibilités, son style de jeu et ses
-                objectifs. Pour l’instant, cette zone sert de base visuelle
-                propre pour ton profil utilisateur.
+                {user?.biography?.trim()
+                  ? user.biography
+                  : "Cet utilisateur n’a pas encore ajouté de biographie."}
               </p>
             </div>
           </div>
@@ -157,7 +194,7 @@ export default function ProfilePage() {
                     <span className="text-xs">Groupes</span>
                   </div>
                   <p className="mt-2 text-2xl font-bold text-[var(--text-main)]">
-                    5
+                    0
                   </p>
                 </div>
 
@@ -167,7 +204,7 @@ export default function ProfilePage() {
                     <span className="text-xs">Teams</span>
                   </div>
                   <p className="mt-2 text-2xl font-bold text-[var(--text-main)]">
-                    2
+                    0
                   </p>
                 </div>
 
@@ -177,7 +214,7 @@ export default function ProfilePage() {
                     <span className="text-xs">Succès</span>
                   </div>
                   <p className="mt-2 text-2xl font-bold text-[var(--text-main)]">
-                    12
+                    0
                   </p>
                 </div>
 
@@ -187,7 +224,7 @@ export default function ProfilePage() {
                     <span className="text-xs">Jeux</span>
                   </div>
                   <p className="mt-2 text-2xl font-bold text-[var(--text-main)]">
-                    7
+                    0
                   </p>
                 </div>
               </div>
@@ -195,18 +232,23 @@ export default function ProfilePage() {
 
             <div className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 shadow-sm">
               <h2 className="text-lg font-semibold text-[var(--text-main)]">
-                Jeux favoris
+                Profil
               </h2>
 
               <div className="mt-4 space-y-3">
-                {["Valorant", "League of Legends", "Apex Legends"].map((game) => (
-                  <div
-                    key={game}
-                    className="rounded-2xl bg-[var(--bg-main)] px-4 py-3 text-sm text-[var(--text-main)]"
-                  >
-                    {game}
-                  </div>
-                ))}
+                <div className="rounded-2xl bg-[var(--bg-main)] px-4 py-3 text-sm text-[var(--text-main)]">
+                  @{user?.username || "username"}
+                </div>
+
+                <div className="rounded-2xl bg-[var(--bg-main)] px-4 py-3 text-sm text-[var(--text-main)]">
+                  {user?.newsletter
+                    ? "Inscrit à la newsletter"
+                    : "Non inscrit à la newsletter"}
+                </div>
+
+                <div className="rounded-2xl bg-[var(--bg-main)] px-4 py-3 text-sm text-[var(--text-main)]">
+                  Compte créé en {memberSince(user?.created_at)}
+                </div>
               </div>
             </div>
           </aside>

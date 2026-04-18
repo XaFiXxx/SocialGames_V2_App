@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../services/api";
 
 export default function EditProfilePage() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   const [form, setForm] = useState({
     username: "",
@@ -12,6 +13,8 @@ export default function EditProfilePage() {
     surname: "",
     email: "",
     birthday: "",
+    biography: "",
+    location: "",
     newsletter: false,
   });
 
@@ -27,8 +30,10 @@ export default function EditProfilePage() {
       name: user.name || "",
       surname: user.surname || "",
       email: user.email || "",
-      birthday: user.birthday || "",
-      newsletter: !!user.newsletter,
+      birthday: user.birthday ? user.birthday.split("T")[0] : "",
+      biography: user.biography || "",
+      location: user.location || "",
+      newsletter: Boolean(user.newsletter),
     });
   }, [user]);
 
@@ -89,7 +94,25 @@ export default function EditProfilePage() {
       }
     }
 
+    if (form.biography.length > 500) {
+      newErrors.biography = "La biographie ne peut pas dépasser 500 caractères.";
+    }
+
+    if (form.location.length > 100) {
+      newErrors.location = "La localisation ne peut pas dépasser 100 caractères.";
+    }
+
     return newErrors;
+  };
+
+  const normalizeLaravelErrors = (laravelErrors = {}) => {
+    const formatted = {};
+
+    Object.entries(laravelErrors).forEach(([key, value]) => {
+      formatted[key] = Array.isArray(value) ? value[0] : value;
+    });
+
+    return formatted;
   };
 
   const handleSubmit = async (e) => {
@@ -104,20 +127,36 @@ export default function EditProfilePage() {
     try {
       setIsSubmitting(true);
 
-      // À brancher ensuite :
-      // await updateProfile(form);
+      const payload = {
+        username: form.username.trim(),
+        name: form.name.trim(),
+        surname: form.surname.trim(),
+        email: form.email.trim(),
+        birthday: form.birthday,
+        biography: form.biography.trim() || null,
+        location: form.location.trim() || null,
+        newsletter: form.newsletter,
+      };
 
-      console.log("Profil mis à jour :", form);
+      await api.put("/api/user/profile", payload);
+
+      await refreshUser();
 
       navigate("/profile", { replace: true });
     } catch (error) {
-      console.error(error);
+      console.error("Erreur update profile :", error);
 
       if (error.response?.status === 422) {
-        setErrors(error.response.data.errors || {});
+        const formattedErrors = normalizeLaravelErrors(
+          error.response.data.errors || {}
+        );
+
+        setErrors(formattedErrors);
         setServerError(
           error.response.data.message || "Certaines données sont invalides."
         );
+      } else if (error.response?.status === 401) {
+        setServerError("Tu dois être connecté pour modifier ton profil.");
       } else {
         setServerError("Une erreur est survenue pendant la mise à jour.");
       }
@@ -250,6 +289,55 @@ export default function EditProfilePage() {
             )}
           </div>
 
+          <div>
+            <label
+              htmlFor="location"
+              className="mb-2 block text-sm font-medium text-[var(--text-main)]"
+            >
+              Localisation
+            </label>
+            <input
+              id="location"
+              name="location"
+              type="text"
+              value={form.location}
+              onChange={handleChange}
+              className={inputClass("location")}
+              placeholder="Ex: Bruxelles, Belgique"
+            />
+            {errors.location && (
+              <p className="mt-2 text-sm text-red-400">{errors.location}</p>
+            )}
+          </div>
+
+          <div>
+            <label
+              htmlFor="biography"
+              className="mb-2 block text-sm font-medium text-[var(--text-main)]"
+            >
+              Biographie
+            </label>
+            <textarea
+              id="biography"
+              name="biography"
+              rows={5}
+              value={form.biography}
+              onChange={handleChange}
+              className={inputClass("biography")}
+              placeholder="Parle un peu de toi, de tes jeux préférés, de ton style de jeu..."
+            />
+            <div className="mt-2 flex items-center justify-between">
+              {errors.biography ? (
+                <p className="text-sm text-red-400">{errors.biography}</p>
+              ) : (
+                <span />
+              )}
+              <p className="text-xs text-[var(--text-secondary)]">
+                {form.biography.length}/500
+              </p>
+            </div>
+          </div>
+
           <div className="rounded-2xl bg-[var(--bg-main)] p-4">
             <label className="flex items-start gap-3 text-sm text-[var(--text-main)]">
               <input
@@ -260,7 +348,8 @@ export default function EditProfilePage() {
                 className="mt-1 h-4 w-4 rounded border-[var(--border-color)] bg-[var(--bg-main)]"
               />
               <span>
-                Je souhaite recevoir la newsletter et les actualités de SquadBase.
+                Je souhaite recevoir la newsletter et les actualités de
+                SquadBase.
               </span>
             </label>
           </div>
