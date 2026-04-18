@@ -4,7 +4,6 @@ import {
   Search,
   Moon,
   Sun,
-  Bell,
   MessageSquare,
   ChevronDown,
   User,
@@ -12,6 +11,7 @@ import {
   Monitor,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import NotificationsDropdown from "../../components/notifications/NotificationsDropdown";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -35,6 +35,7 @@ export default function Navbar() {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -133,12 +134,7 @@ export default function Navbar() {
             <Search size={18} />
           </button>
 
-          <button
-            type="button"
-            className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-main)] transition hover:opacity-90 sm:inline-flex"
-          >
-            <Bell size={18} />
-          </button>
+          <NotificationsDropdown />
 
           <button
             type="button"

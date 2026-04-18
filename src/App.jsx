@@ -10,6 +10,8 @@ import FeedPage from "./pages/Feed";
 import ProfilePage from "./pages/users/profile";
 import EditProfilePage from "./pages/users/Edit";
 
+import PublicProfile from "./pages/users/public/PublicProfile";
+
 import { useAuth } from "./context/AuthContext";
 
 export default function App() {
@@ -57,6 +59,7 @@ export default function App() {
           <Route path="/feed" element={<FeedPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/edit" element={<EditProfilePage />} />
+          <Route path="/users/:id" element={<PublicProfile />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
