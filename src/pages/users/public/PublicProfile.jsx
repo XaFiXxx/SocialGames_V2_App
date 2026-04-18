@@ -12,13 +12,15 @@ import {
   Heart,
   Check,
   UserCheck,
+  MessageSquare,
 } from "lucide-react";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../services/api";
 
 export default function PublicProfile() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user: authUser } = useAuth();
 
   const [user, setUser] = useState(null);
@@ -104,6 +106,24 @@ export default function PublicProfile() {
       await fetchUserProfile();
     } catch (error) {
       console.error("Erreur friend action :", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStartConversation = async () => {
+    if (!user || actionLoading) return;
+
+    try {
+      setActionLoading(true);
+
+      const response = await api.post("/api/conversations/direct", {
+        user_id: user.id,
+      });
+
+      navigate(`/messages?conversation=${response.data.conversation_id}`);
+    } catch (error) {
+      console.error("Erreur création conversation :", error);
     } finally {
       setActionLoading(false);
     }
@@ -275,7 +295,7 @@ export default function PublicProfile() {
               </div>
 
               {!isOwnProfile && (
-                <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
                   <button
                     type="button"
                     onClick={handleFollowToggle}
@@ -291,6 +311,16 @@ export default function PublicProfile() {
                   </button>
 
                   {renderFriendButton()}
+
+                  <button
+                    type="button"
+                    onClick={handleStartConversation}
+                    disabled={actionLoading}
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-main)] px-5 py-3 text-sm font-semibold text-[var(--text-main)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <MessageSquare size={18} />
+                    Envoyer un message
+                  </button>
                 </div>
               )}
             </div>

@@ -127,12 +127,12 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-main)] transition hover:opacity-90 md:hidden"
+          <Link
+            to="/messages"
+            className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-main)] transition hover:opacity-90 sm:inline-flex"
           >
-            <Search size={18} />
-          </button>
+            <MessageSquare size={18} />
+          </Link>
 
           <NotificationsDropdown />
 

@@ -9,6 +9,7 @@ import RegisterPage from "./pages/connections/Register";
 import FeedPage from "./pages/Feed";
 import ProfilePage from "./pages/users/profile";
 import EditProfilePage from "./pages/users/Edit";
+import MessagesPage from "./pages/messages/Index";
 
 import PublicProfile from "./pages/users/public/PublicProfile";
 
@@ -60,6 +61,7 @@ export default function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/edit" element={<EditProfilePage />} />
           <Route path="/users/:id" element={<PublicProfile />} />
+          <Route path="/messages" element={<MessagesPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
