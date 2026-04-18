@@ -17,17 +17,12 @@ export default function Navbar() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  const [isLight, setIsLight] = useState(
+  const [isLight, setIsLight] = useState(() =>
     document.documentElement.classList.contains("light")
   );
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
   const profileMenuRef = useRef(null);
-
-  useEffect(() => {
-    const html = document.documentElement;
-    setIsLight(html.classList.contains("light"));
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -48,7 +43,11 @@ export default function Navbar() {
   const toggleTheme = () => {
     const html = document.documentElement;
     html.classList.toggle("light");
-    setIsLight(html.classList.contains("light"));
+
+    const isNowLight = html.classList.contains("light");
+    setIsLight(isNowLight);
+
+    localStorage.setItem("theme", isNowLight ? "light" : "dark");
   };
 
   const handleLogout = async () => {
