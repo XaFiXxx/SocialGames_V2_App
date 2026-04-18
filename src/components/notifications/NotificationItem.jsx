@@ -12,19 +12,13 @@ function formatRelativeDate(dateString) {
   if (diffInSeconds < 60) return "À l’instant";
 
   const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) {
-    return `Il y a ${diffInMinutes} min`;
-  }
+  if (diffInMinutes < 60) return `Il y a ${diffInMinutes} min`;
 
   const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) {
-    return `Il y a ${diffInHours} h`;
-  }
+  if (diffInHours < 24) return `Il y a ${diffInHours} h`;
 
   const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) {
-    return `Il y a ${diffInDays} j`;
-  }
+  if (diffInDays < 7) return `Il y a ${diffInDays} j`;
 
   return new Intl.DateTimeFormat("fr-BE", {
     day: "2-digit",
@@ -43,21 +37,18 @@ function getNotificationConfig(notification) {
         title: "Nouveau follower",
         message: `${username} a commencé à te suivre.`,
       };
-
     case "friend_request":
       return {
         icon: UserPlus,
         title: "Demande d’ami",
         message: `${username} t’a envoyé une demande d’ami.`,
       };
-
     case "friend_accepted":
       return {
         icon: Check,
         title: "Demande acceptée",
         message: `${username} a accepté ta demande d’ami.`,
       };
-
     default:
       return {
         icon: Bell,
@@ -92,12 +83,9 @@ export default function NotificationItem({
       await api.post(`/api/user/${notification.data.user_id}/friend-accept`);
       await handleRead();
       await deleteNotification();
-
-      if (onActionDone) {
-        await onActionDone();
-      }
+      onActionDone?.();
     } catch (error) {
-      console.error("Erreur lors de l'acceptation de la demande :", error);
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -110,12 +98,9 @@ export default function NotificationItem({
       await api.delete(`/api/user/${notification.data.user_id}/friendship`);
       await handleRead();
       await deleteNotification();
-
-      if (onActionDone) {
-        await onActionDone();
-      }
+      onActionDone?.();
     } catch (error) {
-      console.error("Erreur lors du refus de la demande :", error);
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
@@ -125,55 +110,33 @@ export default function NotificationItem({
 
   return (
     <div
-      className={`rounded-xl px-3 py-3 transition hover:bg-[var(--bg-main)] ${
+      onClick={handleRead}
+      className={`cursor-pointer rounded-xl px-3 py-3 transition hover:bg-[var(--bg-main)] ${
         !notification.is_read ? "bg-[var(--bg-main)]/60" : ""
       }`}
     >
       <div className="flex items-start gap-3">
-        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--bg-main)] text-[var(--text-main)]">
+        <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--bg-main)]">
           <Icon size={16} />
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <p className="text-sm font-semibold text-[var(--text-main)]">
-              {title}
-            </p>
-
+        <div className="flex-1">
+          <div className="flex justify-between">
+            <p className="text-sm font-semibold">{title}</p>
             {!notification.is_read && (
-              <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--primary)]" />
+              <span className="h-2 w-2 rounded-full bg-[var(--primary)]" />
             )}
           </div>
 
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">
-            {message}
-          </p>
-
-          <p className="mt-2 text-xs text-[var(--text-secondary)]">
+          <p className="text-sm text-[var(--text-secondary)]">{message}</p>
+          <p className="text-xs text-[var(--text-secondary)] mt-1">
             {formatRelativeDate(notification.created_at)}
           </p>
 
           {isFriendRequest && (
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={handleAcceptFriendRequest}
-                disabled={isLoading}
-                className="inline-flex items-center gap-2 rounded-xl bg-[var(--primary)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <Check size={14} />
-                Accepter
-              </button>
-
-              <button
-                type="button"
-                onClick={handleDeclineFriendRequest}
-                disabled={isLoading}
-                className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-color)] bg-[var(--bg-main)] px-3 py-2 text-xs font-semibold text-[var(--text-main)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <X size={14} />
-                Refuser
-              </button>
+            <div className="mt-2 flex gap-2">
+              <button onClick={handleAcceptFriendRequest}>✔</button>
+              <button onClick={handleDeclineFriendRequest}>✖</button>
             </div>
           )}
         </div>

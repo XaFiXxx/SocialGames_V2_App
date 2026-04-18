@@ -35,10 +35,8 @@ export default function Navbar() {
     };
 
     document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
+    return () =>
       document.removeEventListener("mousedown", handleClickOutside);
-    };
   }, []);
 
   const toggleTheme = () => {
@@ -93,18 +91,17 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-[var(--border-color)] bg-[var(--bg-card)]/90 backdrop-blur">
       <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <div className="flex min-w-0 items-center gap-3">
+
+        {/* LEFT */}
+        <div className="flex items-center gap-3">
           <Link to="/feed" className="flex items-center gap-3">
             <img
               src={isLight ? "/img/LogoBlanc.png" : "/img/Logo.png"}
               alt="SquadBase"
-              className="h-10 w-auto"
+              className="h-10"
             />
-
             <div className="hidden sm:block">
-              <h1 className="text-lg font-bold tracking-tight text-[var(--text-main)]">
-                SquadBase
-              </h1>
+              <h1 className="text-lg font-bold">SquadBase</h1>
               <p className="text-xs text-[var(--text-secondary)]">
                 Gaming social network
               </p>
@@ -112,120 +109,77 @@ export default function Navbar() {
           </Link>
         </div>
 
+        {/* CENTER */}
         <div className="hidden flex-1 justify-center md:flex">
           <div className="relative w-full max-w-xl">
-            <Search
-              size={18}
-              className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
-            />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2" size={18} />
             <input
               type="text"
-              placeholder="Rechercher un joueur, un groupe, une team..."
-              className="w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-main)] py-3 pl-11 pr-4 text-sm text-[var(--text-main)] outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--primary)]"
+              placeholder="Rechercher..."
+              className="w-full rounded-2xl border py-3 pl-10"
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+        {/* RIGHT */}
+        <div className="flex items-center gap-3">
+
+          {/* Messages */}
           <Link
             to="/messages"
-            className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-main)] transition hover:opacity-90 sm:inline-flex"
+            className="h-10 w-10 flex items-center justify-center rounded-xl border"
           >
             <MessageSquare size={18} />
           </Link>
 
+          {/* Notifications (temps réel ici) */}
           <NotificationsDropdown />
 
-          <button
-            type="button"
-            className="hidden h-10 w-10 items-center justify-center rounded-xl border border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-main)] transition hover:opacity-90 sm:inline-flex"
-          >
-            <MessageSquare size={18} />
-          </button>
-
+          {/* Profil */}
           <div className="relative" ref={profileMenuRef}>
             <button
-              type="button"
               onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-              className="flex items-center gap-3 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-main)] px-2 py-2 text-left transition hover:opacity-90"
+              className="flex items-center gap-3 rounded-2xl border px-2 py-2"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--primary)] text-sm font-semibold text-white">
+              <div className="h-10 w-10 flex items-center justify-center bg-[var(--primary)] text-white rounded-xl">
                 {userInitials}
               </div>
 
               <div className="hidden sm:block">
-                <p className="max-w-[140px] truncate text-sm font-medium text-[var(--text-main)]">
-                  {displayName}
-                </p>
-                <p className="max-w-[140px] truncate text-xs text-[var(--text-secondary)]">
-                  {user?.email ?? "Compte utilisateur"}
+                <p className="text-sm font-medium">{displayName}</p>
+                <p className="text-xs text-[var(--text-secondary)]">
+                  {user?.email}
                 </p>
               </div>
 
-              <ChevronDown
-                size={16}
-                className="hidden text-[var(--text-secondary)] sm:block"
-              />
+              <ChevronDown size={16} />
             </button>
 
             {isProfileMenuOpen && (
-              <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-xl">
-                <div className="border-b border-[var(--border-color)] px-4 py-4">
-                  <p className="text-sm font-semibold text-[var(--text-main)]">
-                    {displayName}
-                  </p>
-                  <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                    {user?.email}
-                  </p>
+              <div className="absolute right-0 mt-3 w-72 bg-[var(--bg-card)] rounded-2xl shadow-xl">
+                <div className="p-4 border-b">
+                  <p className="font-semibold">{displayName}</p>
+                  <p className="text-xs">{user?.email}</p>
                 </div>
 
                 <div className="p-2">
-                  <Link
-                    to="/profile"
-                    onClick={() => setIsProfileMenuOpen(false)}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-[var(--text-main)] transition hover:bg-[var(--bg-main)]"
-                  >
-                    <User size={16} />
-                    Mon profil
+                  <Link to="/profile" className="flex gap-2 p-2">
+                    <User size={16} /> Profil
                   </Link>
 
-                  <button
-                    type="button"
-                    onClick={toggleTheme}
-                    className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-sm text-[var(--text-main)] transition hover:bg-[var(--bg-main)]"
-                  >
-                    <span className="flex items-center gap-3">
-                      <Monitor size={16} />
-                      Apparence
-                    </span>
-
-                    <span className="inline-flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-                      {isLight ? (
-                        <>
-                          Clair
-                          <Moon size={14} />
-                        </>
-                      ) : (
-                        <>
-                          Sombre
-                          <Sun size={14} />
-                        </>
-                      )}
-                    </span>
+                  <button onClick={toggleTheme} className="flex gap-2 p-2">
+                    <Monitor size={16} />
+                    {isLight ? "Clair" : "Sombre"}
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm text-red-400 transition hover:bg-[var(--bg-main)]"
-                  >
-                    <LogOut size={16} />
-                    Se déconnecter
+                  <button onClick={handleLogout} className="flex gap-2 p-2 text-red-400">
+                    <LogOut size={16} /> Déconnexion
                   </button>
                 </div>
               </div>
             )}
           </div>
+
         </div>
       </div>
     </header>

@@ -2,8 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Bell } from "lucide-react";
 import api from "../../services/api";
 import NotificationItem from "./NotificationItem";
+import echo from "../../services/echo";
+import { useAuth } from "../../context/AuthContext";
 
 export default function NotificationsDropdown() {
+  const { user } = useAuth();
+
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -12,17 +16,17 @@ export default function NotificationsDropdown() {
   const dropdownRef = useRef(null);
 
   const unreadCount = useMemo(
-    () => notifications.filter((notification) => !notification.is_read).length,
+    () => notifications.filter((n) => !n.is_read).length,
     [notifications]
   );
 
   const fetchNotifications = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get("/api/notifications");
-      setNotifications(response.data || []);
+      const res = await api.get("/api/notifications");
+      setNotifications(res.data || []);
     } catch (error) {
-      console.error("Erreur lors du chargement des notifications :", error);
+      console.error("Erreur chargement notifications :", error);
       setNotifications([]);
     } finally {
       setIsLoading(false);
@@ -30,15 +34,36 @@ export default function NotificationsDropdown() {
   };
 
   useEffect(() => {
+    if (!user?.id) return;
+
+    const channelName = `notifications.${user.id}`;
+    const channel = echo.private(channelName);
+
+    channel.listen(".notification.sent", (incomingNotification) => {
+      setNotifications((prev) => {
+        const exists = prev.some(
+          (notification) =>
+            Number(notification.id) === Number(incomingNotification.id)
+        );
+
+        if (exists) return prev;
+
+        return [incomingNotification, ...prev];
+      });
+    });
+
+    return () => {
+      echo.leave(channelName);
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
     fetchNotifications();
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setIsOpen(false);
       }
     };
@@ -51,37 +76,38 @@ export default function NotificationsDropdown() {
   }, []);
 
   const handleToggle = async () => {
-    const nextState = !isOpen;
-    setIsOpen(nextState);
+    const next = !isOpen;
+    setIsOpen(next);
 
-    if (nextState) {
+    if (next) {
       await fetchNotifications();
     }
   };
 
-  const handleReadOne = async (notificationId) => {
+  const handleReadOne = async (id) => {
     try {
-      await api.post(`/api/notifications/${notificationId}/read`);
+      await api.post(`/api/notifications/${id}/read`);
 
       setNotifications((prev) =>
         prev.map((notification) =>
-          notification.id === notificationId
+          Number(notification.id) === Number(id)
             ? {
                 ...notification,
                 is_read: true,
-                read_at: new Date().toISOString(),
+                read_at: notification.read_at || new Date().toISOString(),
               }
             : notification
         )
       );
     } catch (error) {
-      console.error("Erreur lors de la lecture de la notification :", error);
+      console.error("Erreur lecture notification :", error);
     }
   };
 
   const handleReadAll = async () => {
     try {
       setIsReadingAll(true);
+
       await api.post("/api/notifications/read-all");
 
       setNotifications((prev) =>
@@ -92,10 +118,7 @@ export default function NotificationsDropdown() {
         }))
       );
     } catch (error) {
-      console.error(
-        "Erreur lors du marquage de toutes les notifications :",
-        error
-      );
+      console.error("Erreur lecture de toutes les notifications :", error);
     } finally {
       setIsReadingAll(false);
     }
