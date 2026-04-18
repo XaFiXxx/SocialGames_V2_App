@@ -1,20 +1,56 @@
-import { Routes, Route } from "react-router";
-import Navbar from "./pages/templates/Nav";
-import Footer from "./pages/templates/Footer";
+import { Routes, Route, Navigate } from "react-router";
+
+import AuthLayout from "./layouts/AuthLayout";
+import AppLayout from "./layouts/AppLayout";
+
 import LoginPage from "./pages/connections/Login";
+import RegisterPage from "./pages/connections/Register";
+import FeedPage from "./pages/Feed";
+
+import { useAuth } from "./context/AuthContext";
 
 export default function App() {
+  const { isAuthenticated, authLoading } = useAuth();
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--bg-main)] text-[var(--text-main)]">
+        Chargement...
+      </div>
+    );
+  }
+
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--bg-main)] text-[var(--text-main)]">
-      <Navbar />
+    <Routes>
+      <Route
+        path="/"
+        element={
+          isAuthenticated ? (
+            <Navigate to="/feed" replace />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        }
+      />
 
-      <main className="flex-1">
-        <Routes>
-          <Route path="/" element={<LoginPage />} />
-        </Routes>
-      </main>
+      <Route
+        element={
+          isAuthenticated ? <Navigate to="/feed" replace /> : <AuthLayout />
+        }
+      >
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Route>
 
-      <Footer />
-    </div>
+      <Route
+        element={
+          isAuthenticated ? <AppLayout /> : <Navigate to="/login" replace />
+        }
+      >
+        <Route path="/feed" element={<FeedPage />} />
+      </Route>
+
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }

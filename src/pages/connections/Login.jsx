@@ -1,7 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
+import { useAuth } from "../../context/AuthContext";
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -9,6 +13,7 @@ export default function LoginPage() {
   });
 
   const [errors, setErrors] = useState({});
+  const [serverError, setServerError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
@@ -23,6 +28,8 @@ export default function LoginPage() {
       ...prev,
       [name]: "",
     }));
+
+    setServerError("");
   };
 
   const validateForm = () => {
@@ -36,9 +43,9 @@ export default function LoginPage() {
 
     if (!form.password.trim()) {
       newErrors.password = "Le mot de passe est requis.";
-    } else if (form.password.length < 6) {
+    } else if (form.password.length < 8) {
       newErrors.password =
-        "Le mot de passe doit contenir au moins 6 caractères.";
+        "Le mot de passe doit contenir au moins 8 caractères.";
     }
 
     return newErrors;
@@ -49,22 +56,42 @@ export default function LoginPage() {
 
     const validationErrors = validateForm();
     setErrors(validationErrors);
+    setServerError("");
 
     if (Object.keys(validationErrors).length > 0) return;
 
     try {
       setIsSubmitting(true);
 
-      // Exemple futur :
-      // await api.post("/login", form);
+      await login({
+        email: form.email,
+        password: form.password,
+        remember: form.remember,
+      });
 
-      console.log("Formulaire envoyé :", form);
+      navigate("/feed", { replace: true });
     } catch (error) {
       console.error(error);
+
+      if (error.response?.status === 422) {
+        setErrors(error.response.data.errors || {});
+        setServerError(
+          error.response.data.message || "Identifiants invalides."
+        );
+      } else {
+        setServerError("Une erreur est survenue pendant la connexion.");
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const inputClass = (fieldName) =>
+    `w-full rounded-2xl border bg-[var(--bg-main)] px-4 py-3 text-sm text-[var(--text-main)] outline-none transition ${
+      errors[fieldName]
+        ? "border-red-500 focus:border-red-500"
+        : "border-[var(--border-color)] focus:border-[var(--primary)]"
+    }`;
 
   return (
     <section className="bg-[var(--bg-main)] text-[var(--text-main)]">
@@ -154,11 +181,7 @@ export default function LoginPage() {
                     value={form.email}
                     onChange={handleChange}
                     placeholder="exemple@email.com"
-                    className={`w-full rounded-2xl border bg-[var(--bg-main)] px-4 py-3 text-sm text-[var(--text-main)] outline-none transition ${
-                      errors.email
-                        ? "border-red-500 focus:border-red-500"
-                        : "border-[var(--border-color)] focus:border-[var(--primary)]"
-                    }`}
+                    className={inputClass("email")}
                   />
                   {errors.email && (
                     <p className="mt-2 text-sm text-red-400">{errors.email}</p>
@@ -175,7 +198,7 @@ export default function LoginPage() {
                     </label>
 
                     <Link
-                      to="/forgot-password"
+                      to="#"
                       className="text-sm text-[var(--primary)] transition hover:opacity-80"
                     >
                       Mot de passe oublié ?
@@ -189,11 +212,7 @@ export default function LoginPage() {
                     value={form.password}
                     onChange={handleChange}
                     placeholder="••••••••"
-                    className={`w-full rounded-2xl border bg-[var(--bg-main)] px-4 py-3 text-sm text-[var(--text-main)] outline-none transition ${
-                      errors.password
-                        ? "border-red-500 focus:border-red-500"
-                        : "border-[var(--border-color)] focus:border-[var(--primary)]"
-                    }`}
+                    className={inputClass("password")}
                   />
                   {errors.password && (
                     <p className="mt-2 text-sm text-red-400">
@@ -214,6 +233,10 @@ export default function LoginPage() {
                     Se souvenir de moi
                   </label>
                 </div>
+
+                {serverError && (
+                  <p className="text-sm text-red-400">{serverError}</p>
+                )}
 
                 <button
                   type="submit"
