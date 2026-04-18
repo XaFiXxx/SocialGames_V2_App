@@ -9,6 +9,7 @@ import {
   ChevronDown,
   User,
   LogOut,
+  Monitor,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
@@ -147,14 +148,6 @@ export default function Navbar() {
             <MessageSquare size={18} />
           </button>
 
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-main)] transition hover:opacity-90"
-          >
-            {isLight ? <Moon size={18} /> : <Sun size={18} />}
-          </button>
-
           <div className="relative" ref={profileMenuRef}>
             <button
               type="button"
@@ -181,7 +174,7 @@ export default function Navbar() {
             </button>
 
             {isProfileMenuOpen && (
-              <div className="absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-xl">
+              <div className="absolute right-0 mt-3 w-72 overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-xl">
                 <div className="border-b border-[var(--border-color)] px-4 py-4">
                   <p className="text-sm font-semibold text-[var(--text-main)]">
                     {displayName}
@@ -200,6 +193,31 @@ export default function Navbar() {
                     <User size={16} />
                     Mon profil
                   </Link>
+
+                  <button
+                    type="button"
+                    onClick={toggleTheme}
+                    className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-sm text-[var(--text-main)] transition hover:bg-[var(--bg-main)]"
+                  >
+                    <span className="flex items-center gap-3">
+                      <Monitor size={16} />
+                      Apparence
+                    </span>
+
+                    <span className="inline-flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                      {isLight ? (
+                        <>
+                          Clair
+                          <Moon size={14} />
+                        </>
+                      ) : (
+                        <>
+                          Sombre
+                          <Sun size={14} />
+                        </>
+                      )}
+                    </span>
+                  </button>
 
                   <button
                     type="button"

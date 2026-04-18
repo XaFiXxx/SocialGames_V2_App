@@ -6,6 +6,8 @@ import AppLayout from "./layouts/AppLayout";
 import LoginPage from "./pages/connections/Login";
 import RegisterPage from "./pages/connections/Register";
 import FeedPage from "./pages/Feed";
+import ProfilePage from "./pages/users/profile";
+import EditProfilePage from "./pages/users/Edit";
 
 import { useAuth } from "./context/AuthContext";
 
@@ -48,6 +50,8 @@ export default function App() {
         }
       >
         <Route path="/feed" element={<FeedPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile/edit" element={<EditProfilePage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
