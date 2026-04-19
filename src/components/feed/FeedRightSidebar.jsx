@@ -14,7 +14,7 @@ export default function FeedRightSidebar() {
   return (
     <aside className="hidden xl:block">
       <div className="sticky top-24 space-y-6">
-        <div className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 shadow-sm">
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur-xl">
           <h3 className="text-base font-semibold text-[var(--text-main)]">
             Groupes suggérés
           </h3>
@@ -23,7 +23,7 @@ export default function FeedRightSidebar() {
             {suggestedGroups.map((group) => (
               <div
                 key={group.id}
-                className="rounded-2xl bg-[var(--bg-main)] p-4"
+                className="rounded-2xl border border-white/10 bg-white/5 p-4"
               >
                 <p className="text-sm font-medium text-[var(--text-main)]">
                   {group.name}
@@ -33,7 +33,7 @@ export default function FeedRightSidebar() {
                 </p>
                 <button
                   type="button"
-                  className="mt-3 rounded-xl bg-[var(--primary)] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[var(--primary-hover)]"
+                  className="mt-3 rounded-xl bg-gradient-to-r from-[var(--primary)] to-cyan-400 px-3 py-2 text-xs font-semibold text-white shadow-lg transition hover:scale-[1.01]"
                 >
                   Rejoindre
                 </button>
@@ -42,7 +42,7 @@ export default function FeedRightSidebar() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 shadow-sm">
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur-xl">
           <h3 className="text-base font-semibold text-[var(--text-main)]">
             Teams à découvrir
           </h3>
@@ -51,7 +51,7 @@ export default function FeedRightSidebar() {
             {suggestedTeams.map((team) => (
               <div
                 key={team.id}
-                className="rounded-2xl bg-[var(--bg-main)] p-4"
+                className="rounded-2xl border border-white/10 bg-white/5 p-4"
               >
                 <p className="text-sm font-medium text-[var(--text-main)]">
                   {team.name}
@@ -61,7 +61,7 @@ export default function FeedRightSidebar() {
                 </p>
                 <button
                   type="button"
-                  className="mt-3 rounded-xl border border-[var(--border-color)] px-3 py-2 text-xs font-semibold text-[var(--text-main)] transition hover:bg-[var(--bg-card)]"
+                  className="mt-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-[var(--text-main)] transition hover:bg-white/10"
                 >
                   Voir la team
                 </button>
@@ -70,7 +70,7 @@ export default function FeedRightSidebar() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 shadow-sm">
+        <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-[0_10px_30px_rgba(0,0,0,0.18)] backdrop-blur-xl">
           <h3 className="text-base font-semibold text-[var(--text-main)]">
             Tendances gaming
           </h3>
