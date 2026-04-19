@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth } from "../../context/AuthContext";
 
+const IS_MAINTENANCE = true;
+const ACCESS_CODE = "squadtest2026@@";
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -12,9 +15,27 @@ export default function LoginPage() {
     remember: false,
   });
 
+  const [accessCode, setAccessCode] = useState("");
+  const [isUnlocked, setIsUnlocked] = useState(
+    sessionStorage.getItem("site_access_granted") === "true"
+  );
+
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleUnlock = (e) => {
+    e.preventDefault();
+
+    if (accessCode.trim() === ACCESS_CODE) {
+      sessionStorage.setItem("site_access_granted", "true");
+      setIsUnlocked(true);
+      setAccessCode("");
+      return;
+    }
+
+    setServerError("Code d’accès invalide.");
+  };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -92,6 +113,50 @@ export default function LoginPage() {
         ? "border-red-500 focus:border-red-500"
         : "border-[var(--border-color)] focus:border-[var(--primary)]"
     }`;
+
+  if (IS_MAINTENANCE && !isUnlocked) {
+    return (
+      <section className="flex min-h-screen items-center justify-center bg-[var(--bg-main)] px-6 text-[var(--text-main)]">
+        <div className="w-full max-w-md rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-8 shadow-xl">
+          <h1 className="text-2xl font-bold text-center">
+            🚧 Site en construction
+          </h1>
+
+          <p className="mt-4 text-sm text-center text-[var(--text-secondary)]">
+            SquadBase est actuellement en phase de test privée.
+          </p>
+
+          <p className="mt-2 text-sm text-center text-[var(--text-secondary)]">
+            Entre le code d’accès temporaire pour continuer.
+          </p>
+
+          <form onSubmit={handleUnlock} className="mt-6 space-y-4">
+            <input
+              type="password"
+              value={accessCode}
+              onChange={(e) => {
+                setAccessCode(e.target.value);
+                setServerError("");
+              }}
+              placeholder="Code d’accès"
+              className="w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-main)] px-4 py-3 text-sm text-[var(--text-main)] outline-none transition focus:border-[var(--primary)]"
+            />
+
+            {serverError && (
+              <p className="text-sm text-center text-red-400">{serverError}</p>
+            )}
+
+            <button
+              type="submit"
+              className="inline-flex w-full items-center justify-center rounded-2xl bg-[var(--primary)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--primary-hover)]"
+            >
+              Accéder au site
+            </button>
+          </form>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-[var(--bg-main)] text-[var(--text-main)]">
