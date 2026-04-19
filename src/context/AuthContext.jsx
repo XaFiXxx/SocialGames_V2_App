@@ -13,7 +13,12 @@ export function AuthProvider({ children }) {
       setUser(response.data);
       return response.data;
     } catch (error) {
-      setUser(null);
+      if (error.response?.status === 401) {
+        setUser(null);
+      } else {
+        console.error("Erreur refreshUser :", error);
+      }
+
       return null;
     }
   };

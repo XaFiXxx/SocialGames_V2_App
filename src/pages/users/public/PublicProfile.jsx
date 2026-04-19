@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   Mail,
@@ -13,8 +13,9 @@ import {
   Check,
   UserCheck,
   MessageSquare,
+  Swords,
 } from "lucide-react";
-import { useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { useAuth } from "../../../context/AuthContext";
 import api from "../../../services/api";
 
@@ -23,11 +24,9 @@ export default function PublicProfile() {
   const navigate = useNavigate();
   const { user: authUser } = useAuth();
 
-  const [user, setUser] = useState(null);
-  const [meta, setMeta] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
-
   const [modal, setModal] = useState({
     type: null,
     isOpen: false,
@@ -51,12 +50,10 @@ export default function PublicProfile() {
     try {
       setLoading(true);
       const res = await api.get(`/api/user/${id}`);
-      setUser(res.data.user);
-      setMeta(res.data.meta);
+      setProfile(res.data);
     } catch (err) {
       console.error(err);
-      setUser(null);
-      setMeta(null);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
@@ -65,6 +62,22 @@ export default function PublicProfile() {
   useEffect(() => {
     fetchUserProfile();
   }, [id]);
+
+  const user = profile?.user ?? null;
+  const meta = profile?.meta ?? null;
+  const friends = profile?.friends ?? [];
+  const followers = profile?.followers ?? [];
+  const following = profile?.following ?? [];
+  const games = profile?.games ?? [];
+  const platforms = profile?.platforms ?? [];
+  const posts = profile?.posts ?? [];
+
+  const followersCount = meta?.followers_count ?? followers.length ?? 0;
+  const followingCount = meta?.following_count ?? following.length ?? 0;
+  const friendsCount = meta?.friends_count ?? friends.length ?? 0;
+  const gamesCount = meta?.games_count ?? games.length ?? 0;
+  const platformsCount = meta?.platforms_count ?? platforms.length ?? 0;
+  const postsCount = meta?.posts_count ?? posts.length ?? 0;
 
   const handleFollowToggle = async () => {
     if (!user || !meta || actionLoading) return;
@@ -152,28 +165,6 @@ export default function PublicProfile() {
     }).format(date);
   };
 
-  if (loading) {
-    return (
-      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-8 text-[var(--text-main)] shadow-sm">
-          Chargement du profil...
-        </div>
-      </section>
-    );
-  }
-
-  if (!user || !meta) {
-    return (
-      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-8 text-[var(--text-main)] shadow-sm">
-          Profil introuvable.
-        </div>
-      </section>
-    );
-  }
-
-  const isOwnProfile = Number(authUser?.id) === Number(user?.id);
-
   const fullName =
     user?.name && user?.surname
       ? `${user.name} ${user.surname}`
@@ -187,8 +178,44 @@ export default function PublicProfile() {
   const avatarSrc = getImageUrl(user?.avatar_url);
   const coverSrc = getImageUrl(user?.cover_url);
 
+  const isOwnProfile = Number(authUser?.id) === Number(user?.id);
+
+  const profileBadges = useMemo(() => {
+    if (!user) return [];
+
+    const badges = [];
+
+    if (user.location) {
+      badges.push({
+        key: "location",
+        icon: <MapPin size={14} />,
+        label: user.location,
+      });
+    }
+
+    badges.push({
+      key: "member",
+      icon: <UserRound size={14} />,
+      label: `Membre depuis ${memberSince(user.created_at)}`,
+    });
+
+    badges.push({
+      key: "followers",
+      icon: <Users size={14} />,
+      label: `${followersCount} follower${followersCount > 1 ? "s" : ""}`,
+    });
+
+    badges.push({
+      key: "friends",
+      icon: <Swords size={14} />,
+      label: `${friendsCount} ami${friendsCount > 1 ? "s" : ""}`,
+    });
+
+    return badges;
+  }, [user, followersCount, friendsCount]);
+
   const renderFriendButton = () => {
-    if (!meta.friend_status) {
+    if (!meta?.friend_status) {
       return (
         <button
           type="button"
@@ -247,6 +274,26 @@ export default function PublicProfile() {
     return null;
   };
 
+  if (loading) {
+    return (
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-8 text-[var(--text-main)] shadow-sm">
+          Chargement du profil...
+        </div>
+      </section>
+    );
+  }
+
+  if (!user || !meta) {
+    return (
+      <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <div className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-8 text-[var(--text-main)] shadow-sm">
+          Profil introuvable.
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
       <div className="space-y-6">
@@ -267,7 +314,7 @@ export default function PublicProfile() {
           </div>
 
           <div className="px-6 pb-6">
-            <div className="-mt-12 pt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div className="-mt-12 flex flex-col gap-4 pt-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="flex items-end gap-4">
                 <div
                   onClick={() => openModal("avatar")}
@@ -323,6 +370,17 @@ export default function PublicProfile() {
                   </button>
                 </div>
               )}
+
+              {isOwnProfile && (
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    to="/profile"
+                    className="inline-flex items-center justify-center rounded-2xl bg-[var(--primary)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--primary-hover)]"
+                  >
+                    Voir mon profil privé
+                  </Link>
+                </div>
+              )}
             </div>
 
             <p className="mt-5 max-w-2xl text-sm leading-7 text-[var(--text-secondary)]">
@@ -332,17 +390,15 @@ export default function PublicProfile() {
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              {user?.location && (
-                <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--bg-main)] px-4 py-2 text-sm text-[var(--text-main)]">
-                  <MapPin size={14} />
-                  {user.location}
+              {profileBadges.map((badge) => (
+                <span
+                  key={badge.key}
+                  className="inline-flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--bg-main)] px-4 py-2 text-sm text-[var(--text-main)]"
+                >
+                  {badge.icon}
+                  {badge.label}
                 </span>
-              )}
-
-              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-color)] bg-[var(--bg-main)] px-4 py-2 text-sm text-[var(--text-main)]">
-                <UserRound size={14} />
-                Membre depuis {memberSince(user?.created_at)}
-              </span>
+              ))}
 
               <span className="rounded-full border border-[var(--border-color)] bg-[var(--bg-main)] px-4 py-2 text-sm text-[var(--text-main)]">
                 {user?.newsletter
@@ -428,6 +484,39 @@ export default function PublicProfile() {
                   : "Cet utilisateur n’a pas encore ajouté de biographie."}
               </p>
             </div>
+
+            <div className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-[var(--text-main)]">
+                Réseau
+              </h2>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl bg-[var(--bg-main)] p-4">
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Followers
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-[var(--text-main)]">
+                    {followersCount}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[var(--bg-main)] p-4">
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Abonnements
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-[var(--text-main)]">
+                    {followingCount}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[var(--bg-main)] p-4">
+                  <p className="text-xs text-[var(--text-secondary)]">Amis</p>
+                  <p className="mt-2 text-2xl font-bold text-[var(--text-main)]">
+                    {friendsCount}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           <aside className="space-y-6">
@@ -443,27 +532,27 @@ export default function PublicProfile() {
                     <span className="text-xs">Followers</span>
                   </div>
                   <p className="mt-2 text-2xl font-bold text-[var(--text-main)]">
-                    {meta.followers_count ?? 0}
+                    {followersCount}
                   </p>
                 </div>
 
                 <div className="rounded-2xl bg-[var(--bg-main)] p-4">
                   <div className="flex items-center gap-2 text-[var(--text-secondary)]">
                     <Heart size={16} />
-                    <span className="text-xs">Amis</span>
+                    <span className="text-xs">Following</span>
                   </div>
                   <p className="mt-2 text-2xl font-bold text-[var(--text-main)]">
-                    {meta.friends_count ?? 0}
+                    {followingCount}
                   </p>
                 </div>
 
                 <div className="rounded-2xl bg-[var(--bg-main)] p-4">
                   <div className="flex items-center gap-2 text-[var(--text-secondary)]">
-                    <Trophy size={16} />
-                    <span className="text-xs">Succès</span>
+                    <Swords size={16} />
+                    <span className="text-xs">Amis</span>
                   </div>
                   <p className="mt-2 text-2xl font-bold text-[var(--text-main)]">
-                    0
+                    {friendsCount}
                   </p>
                 </div>
 
@@ -473,7 +562,27 @@ export default function PublicProfile() {
                     <span className="text-xs">Jeux</span>
                   </div>
                   <p className="mt-2 text-2xl font-bold text-[var(--text-main)]">
-                    0
+                    {gamesCount}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[var(--bg-main)] p-4">
+                  <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                    <Trophy size={16} />
+                    <span className="text-xs">Posts</span>
+                  </div>
+                  <p className="mt-2 text-2xl font-bold text-[var(--text-main)]">
+                    {postsCount}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl bg-[var(--bg-main)] p-4">
+                  <div className="flex items-center gap-2 text-[var(--text-secondary)]">
+                    <Gamepad2 size={16} />
+                    <span className="text-xs">Plateformes</span>
+                  </div>
+                  <p className="mt-2 text-2xl font-bold text-[var(--text-main)]">
+                    {platformsCount}
                   </p>
                 </div>
               </div>
@@ -485,9 +594,54 @@ export default function PublicProfile() {
               </h2>
 
               <div className="mt-4 space-y-3">
-                <div className="rounded-2xl bg-[var(--bg-main)] px-4 py-4 text-sm text-[var(--text-secondary)]">
-                  Aucun ami affiché pour le moment.
-                </div>
+                {friends.length > 0 ? (
+                  friends.slice(0, 5).map((friend) => {
+                    const friendName =
+                      friend?.name && friend?.surname
+                        ? `${friend.name} ${friend.surname}`
+                        : friend?.username || "Utilisateur";
+
+                    const friendInitials =
+                      friend?.name && friend?.surname
+                        ? `${friend.name[0]}${friend.surname[0]}`.toUpperCase()
+                        : friend?.username?.slice(0, 2).toUpperCase() || "U";
+
+                    const friendAvatar = getImageUrl(friend?.avatar_url);
+
+                    return (
+                      <Link
+                        key={friend.id}
+                        to={`/users/${friend.id}`}
+                        className="flex items-center gap-3 rounded-2xl bg-[var(--bg-main)] px-4 py-3 transition hover:opacity-90"
+                      >
+                        <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-[var(--bg-card)] text-sm font-bold text-[var(--text-main)]">
+                          {friendAvatar ? (
+                            <img
+                              src={friendAvatar}
+                              alt={friendName}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            friendInitials
+                          )}
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-[var(--text-main)]">
+                            {friendName}
+                          </p>
+                          <p className="truncate text-xs text-[var(--text-secondary)]">
+                            @{friend?.username}
+                          </p>
+                        </div>
+                      </Link>
+                    );
+                  })
+                ) : (
+                  <div className="rounded-2xl bg-[var(--bg-main)] px-4 py-4 text-sm text-[var(--text-secondary)]">
+                    Aucun ami affiché pour le moment.
+                  </div>
+                )}
               </div>
             </div>
 
@@ -509,6 +663,10 @@ export default function PublicProfile() {
 
                 <div className="rounded-2xl bg-[var(--bg-main)] px-4 py-3 text-sm text-[var(--text-main)]">
                   Compte créé en {memberSince(user?.created_at)}
+                </div>
+
+                <div className="rounded-2xl bg-[var(--bg-main)] px-4 py-3 text-sm text-[var(--text-main)]">
+                  {platformsCount} plateforme{platformsCount > 1 ? "s" : ""}
                 </div>
               </div>
             </div>
