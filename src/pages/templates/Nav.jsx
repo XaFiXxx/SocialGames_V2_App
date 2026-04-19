@@ -1,20 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import {
-  Search,
-  Moon,
-  Sun,
-  MessageSquare,
-  ChevronDown,
-  User,
-  LogOut,
-  Monitor,
-  X,
-} from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import NotificationsDropdown from "../../components/notifications/NotificationsDropdown";
 import echo from "../../services/echo";
 import api from "../../services/api";
+import NavbarSearch from "./components/NavbarSearch";
+import NavbarProfileMenu from "./components/NavbarProfileMenu";
+import MessageToasts from "./components/MessageToasts";
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -27,7 +20,13 @@ export default function Navbar() {
   const [messageNotifications, setMessageNotifications] = useState([]);
   const [messageUnreadCount, setMessageUnreadCount] = useState(0);
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
   const profileMenuRef = useRef(null);
+  const searchRef = useRef(null);
   const receivedMessageIdsRef = useRef(new Set());
 
   useEffect(() => {
@@ -38,12 +37,17 @@ export default function Navbar() {
       ) {
         setIsProfileMenuOpen(false);
       }
+
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setIsSearchOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
 
-    return () =>
+    return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+    };
   }, []);
 
   useEffect(() => {
@@ -90,12 +94,14 @@ export default function Navbar() {
 
       receivedMessageIdsRef.current.add(notificationId);
 
-      setMessageNotifications((prev) => [
-        incomingNotification,
-        ...prev.filter(
-          (notification) => Number(notification.id) !== notificationId
-        ),
-      ].slice(0, 3));
+      setMessageNotifications((prev) =>
+        [
+          incomingNotification,
+          ...prev.filter(
+            (notification) => Number(notification.id) !== notificationId
+          ),
+        ].slice(0, 3)
+      );
 
       setMessageUnreadCount((prev) => prev + 1);
     });
@@ -115,6 +121,38 @@ export default function Navbar() {
 
     return () => clearTimeout(timeout);
   }, [messageNotifications]);
+
+  useEffect(() => {
+    const trimmedQuery = searchQuery.trim();
+
+    if (trimmedQuery.length < 2) {
+      setSearchResults([]);
+      setIsSearching(false);
+      setIsSearchOpen(false);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      try {
+        setIsSearching(true);
+
+        const response = await api.get("/api/search/users", {
+          params: { q: trimmedQuery },
+        });
+
+        setSearchResults(response.data ?? []);
+        setIsSearchOpen(true);
+      } catch (error) {
+        console.error("Erreur recherche utilisateurs :", error);
+        setSearchResults([]);
+        setIsSearchOpen(true);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeout);
+  }, [searchQuery]);
 
   const toggleTheme = () => {
     const html = document.documentElement;
@@ -170,6 +208,32 @@ export default function Navbar() {
     );
   };
 
+  const handleOpenNotification = async (notification) => {
+    try {
+      await api.post(`/api/notifications/${notification.id}/read`);
+    } catch (error) {
+      console.error("Erreur lecture notification message :", error);
+    }
+
+    receivedMessageIdsRef.current.delete(Number(notification.id));
+    removeToast(notification.id);
+    setMessageUnreadCount((prev) => Math.max(prev - 1, 0));
+    navigate(`/messages?conversation=${notification.data?.conversation_id}`);
+  };
+
+  const handleOpenUser = (userId) => {
+    setSearchQuery("");
+    setSearchResults([]);
+    setIsSearchOpen(false);
+    navigate(`/users/${userId}`);
+  };
+
+  const getImageUrl = (path) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    return `${import.meta.env.VITE_API_URL}/${path}`;
+  };
+
   const displayName = useMemo(() => {
     if (!user) return "Utilisateur";
 
@@ -210,7 +274,9 @@ export default function Navbar() {
                 className="h-10"
               />
               <div className="hidden sm:block">
-                <h1 className="text-lg font-bold">SquadBase</h1>
+                <h1 className="text-lg font-bold text-[var(--text-main)]">
+                  SquadBase
+                </h1>
                 <p className="text-xs text-[var(--text-secondary)]">
                   Gaming social network
                 </p>
@@ -219,17 +285,17 @@ export default function Navbar() {
           </div>
 
           <div className="hidden flex-1 justify-center md:flex">
-            <div className="relative w-full max-w-xl">
-              <Search
-                className="absolute left-4 top-1/2 -translate-y-1/2"
-                size={18}
-              />
-              <input
-                type="text"
-                placeholder="Rechercher..."
-                className="w-full rounded-2xl border py-3 pl-10"
-              />
-            </div>
+            <NavbarSearch
+              searchRef={searchRef}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              isSearchOpen={isSearchOpen}
+              setIsSearchOpen={setIsSearchOpen}
+              isSearching={isSearching}
+              searchResults={searchResults}
+              onOpenUser={handleOpenUser}
+              getImageUrl={getImageUrl}
+            />
           </div>
 
           <div className="flex items-center gap-3">
@@ -252,120 +318,26 @@ export default function Navbar() {
 
             <NotificationsDropdown />
 
-            <div className="relative" ref={profileMenuRef}>
-              <button
-                onClick={() => setIsProfileMenuOpen((prev) => !prev)}
-                className="flex items-center gap-3 rounded-2xl border px-2 py-2"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--primary)] text-white">
-                  {userInitials}
-                </div>
-
-                <div className="hidden sm:block">
-                  <p className="text-sm font-medium">{displayName}</p>
-                  <p className="text-xs text-[var(--text-secondary)]">
-                    {user?.email}
-                  </p>
-                </div>
-
-                <ChevronDown size={16} />
-              </button>
-
-              {isProfileMenuOpen && (
-                <div className="absolute right-0 mt-3 w-72 rounded-2xl bg-[var(--bg-card)] shadow-xl">
-                  <div className="border-b p-4">
-                    <p className="font-semibold">{displayName}</p>
-                    <p className="text-xs">{user?.email}</p>
-                  </div>
-
-                  <div className="p-2">
-                    <Link to="/profile" className="flex gap-2 p-2">
-                      <User size={16} /> Profil
-                    </Link>
-
-                    <button onClick={toggleTheme} className="flex gap-2 p-2">
-                      <Monitor size={16} />
-                      {isLight ? "Clair" : "Sombre"}
-                    </button>
-
-                    <button
-                      onClick={handleLogout}
-                      className="flex gap-2 p-2 text-red-400"
-                    >
-                      <LogOut size={16} /> Déconnexion
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            <NavbarProfileMenu
+              user={user}
+              displayName={displayName}
+              userInitials={userInitials}
+              isOpen={isProfileMenuOpen}
+              onToggleOpen={() => setIsProfileMenuOpen((prev) => !prev)}
+              onLogout={handleLogout}
+              isLight={isLight}
+              onToggleTheme={toggleTheme}
+              profileMenuRef={profileMenuRef}
+            />
           </div>
         </div>
       </header>
 
-      <div className="pointer-events-none fixed right-4 top-24 z-[60] flex w-full max-w-sm flex-col gap-3">
-        {messageNotifications.map((notification) => (
-          <div
-            key={notification.id}
-            className="pointer-events-auto overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-xl"
-          >
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  await api.post(`/api/notifications/${notification.id}/read`);
-                } catch (error) {
-                  console.error("Erreur lecture notification message :", error);
-                }
-
-                receivedMessageIdsRef.current.delete(Number(notification.id));
-                removeToast(notification.id);
-                setMessageUnreadCount((prev) => Math.max(prev - 1, 0));
-                navigate(
-                  `/messages?conversation=${notification.data?.conversation_id}`
-                );
-              }}
-              className="w-full p-4 text-left transition hover:bg-[var(--bg-main)]"
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--bg-main)] text-[var(--text-main)]">
-                  <MessageSquare size={18} />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-sm font-semibold text-[var(--text-main)]">
-                      Nouveau message
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeToast(notification.id);
-                      }}
-                      className="text-[var(--text-secondary)] transition hover:opacity-70"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-
-                  <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                    <span className="font-medium text-[var(--text-main)]">
-                      {notification.data?.username || "Utilisateur"}
-                    </span>
-                    {" · "}
-                    {notification.data?.message?.trim()
-                      ? notification.data.message.length > 60
-                        ? `${notification.data.message.slice(0, 60)}...`
-                        : notification.data.message
-                      : "t’a envoyé un message"}
-                  </p>
-                </div>
-              </div>
-            </button>
-          </div>
-        ))}
-      </div>
+      <MessageToasts
+        notifications={messageNotifications}
+        onOpenNotification={handleOpenNotification}
+        onRemove={removeToast}
+      />
     </>
   );
 }
