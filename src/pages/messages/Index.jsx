@@ -32,6 +32,7 @@ export default function MessagesPage() {
 
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const previousMessagesCountRef = useRef(0);
 
   const scrollToBottom = (behavior = "smooth") => {
     messagesEndRef.current?.scrollIntoView({
@@ -91,13 +92,29 @@ export default function MessagesPage() {
   const fetchMessages = async (conversationId) => {
     try {
       setIsLoadingMessages(true);
-      const response = await api.get(`/api/conversations/${conversationId}/messages`);
-      setMessages(response.data || []);
+
+      const response = await api.get(
+        `/api/conversations/${conversationId}/messages`
+      );
+
+      const fetchedMessages = response.data || [];
+      setMessages(fetchedMessages);
+
+      return fetchedMessages;
     } catch (error) {
       console.error("Erreur chargement messages :", error);
       setMessages([]);
+      return [];
     } finally {
       setIsLoadingMessages(false);
+    }
+  };
+
+  const markConversationAsRead = async (conversationId) => {
+    try {
+      await api.post(`/api/conversations/${conversationId}/read`);
+    } catch (error) {
+      console.error("Erreur marquage conversation comme lue :", error);
     }
   };
 
@@ -106,11 +123,18 @@ export default function MessagesPage() {
   }, []);
 
   useEffect(() => {
-    if (selectedConversation?.id) {
-      fetchMessages(selectedConversation.id);
-    } else {
-      setMessages([]);
-    }
+    const loadConversation = async () => {
+      if (!selectedConversation?.id) {
+        setMessages([]);
+        previousMessagesCountRef.current = 0;
+        return;
+      }
+
+      await fetchMessages(selectedConversation.id);
+      await markConversationAsRead(selectedConversation.id);
+    };
+
+    loadConversation();
   }, [selectedConversation?.id]);
 
   useEffect(() => {
@@ -123,7 +147,10 @@ export default function MessagesPage() {
     const channelName = `chat.${selectedConversation.id}`;
     const channel = echo.private(channelName);
 
-    channel.listen(".message.sent", (incomingMessage) => {
+    channel.stopListening(".message.sent");
+    channel.stopListening(".messages.seen");
+
+    channel.listen(".message.sent", async (incomingMessage) => {
       setMessages((prev) => {
         const exists = prev.some(
           (message) => Number(message.id) === Number(incomingMessage.id)
@@ -146,15 +173,40 @@ export default function MessagesPage() {
 
         return sortConversations(updated);
       });
+
+      if (Number(incomingMessage.user_id) !== Number(user?.id)) {
+        await markConversationAsRead(selectedConversation.id);
+      }
+    });
+
+    channel.listen(".messages.seen", ({ message_ids, seen_at }) => {
+      const normalizedIds = (message_ids || []).map(Number);
+
+      setMessages((prev) =>
+        prev.map((message) =>
+          normalizedIds.includes(Number(message.id))
+            ? { ...message, seen_at }
+            : message
+        )
+      );
     });
 
     return () => {
+      channel.stopListening(".message.sent");
+      channel.stopListening(".messages.seen");
       echo.leave(channelName);
     };
-  }, [selectedConversation?.id]);
+  }, [selectedConversation?.id, user?.id]);
 
   useEffect(() => {
-    scrollToBottom();
+    const currentCount = messages.length;
+    const previousCount = previousMessagesCountRef.current;
+
+    if (currentCount > previousCount) {
+      scrollToBottom();
+    }
+
+    previousMessagesCountRef.current = currentCount;
   }, [messages]);
 
   const filteredConversations = useMemo(() => {
@@ -187,7 +239,7 @@ export default function MessagesPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
 
     if (!selectedConversation?.id) return;
     if (!content.trim() && !image) return;

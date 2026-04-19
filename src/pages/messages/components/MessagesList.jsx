@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { CheckCheck } from "lucide-react";
 import { formatMessageTime, getImageUrl } from "../utils/messageHelpers";
 
 export default function MessagesList({
@@ -53,7 +54,6 @@ export default function MessagesList({
 
             const avatar = getImageUrl(message.user?.avatar_url);
 
-            // 👉 grouper les messages consécutifs du même utilisateur
             const previousMessage = messages[index - 1];
             const isSameAuthorAsPrevious =
               previousMessage &&
@@ -66,7 +66,6 @@ export default function MessagesList({
                   isMine ? "justify-end" : "justify-start"
                 }`}
               >
-                {/* AVATAR (seulement si message reçu + pas répétition) */}
                 {!isMine && !isSameAuthorAsPrevious && (
                   <div className="h-9 w-9 shrink-0 overflow-hidden rounded-xl bg-[var(--bg-card)]">
                     {avatar ? (
@@ -83,13 +82,9 @@ export default function MessagesList({
                   </div>
                 )}
 
-                {/* espace si pas d'avatar (alignement propre) */}
-                {!isMine && isSameAuthorAsPrevious && (
-                  <div className="w-9" />
-                )}
+                {!isMine && isSameAuthorAsPrevious && <div className="w-9" />}
 
-                <div className={`max-w-[80%]`}>
-                  {/* Nom (une seule fois par groupe) */}
+                <div className="max-w-[80%]">
                   {!isMine && !isSameAuthorAsPrevious && (
                     <p className="mb-1 text-xs font-semibold text-[var(--text-secondary)]">
                       {authorName}
@@ -119,15 +114,22 @@ export default function MessagesList({
                       />
                     )}
 
-                    <p
-                      className={`mt-2 text-right text-[11px] ${
+                    <div
+                      className={`mt-2 flex items-center justify-end gap-2 text-[11px] ${
                         isMine
                           ? "text-white/75"
                           : "text-[var(--text-secondary)]"
                       }`}
                     >
-                      {formatMessageTime(message.created_at)}
-                    </p>
+                      <span>{formatMessageTime(message.created_at)}</span>
+
+                      {isMine && message.seen_at && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/90">
+                          <CheckCheck size={12} />
+                          {/* vu */}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
