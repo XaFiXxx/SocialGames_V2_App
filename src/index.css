@@ -1,14 +1,15 @@
 @import "tailwindcss";
 
+/* 🌑 DARK */
 :root {
-  --bg-main: #0f172a;        /* moins noir, plus lisible */
-  --bg-secondary: #111827;
-  --bg-card: #1e293b;
+  --bg-main: #0a0f1c;
+  --bg-secondary: #101726;
+  --bg-card: #182132;
 
-  --border-color: #334155;
+  --border-color: #283548;
 
-  --text-main: #e2e8f0;
-  --text-secondary: #94a3b8;
+  --text-main: #e5edf7;
+  --text-secondary: #93a4ba;
 
   --primary: #6366f1;
   --primary-hover: #4f46e5;
@@ -16,18 +17,21 @@
   --accent: #22c55e;
 }
 
+/* 🌘 LIGHT = dark plus clair */
 .light {
-  --bg-main: #eef2f6;        /* fond global légèrement gris */
-  --bg-secondary: #e5eaf0;
-  --bg-card: #f8fafc;        /* cartes pas full white */
+  --bg-main: #3b4558;
+  --bg-secondary: #465267;
+  --bg-card: #556277;
 
-  --border-color: #d6dbe1;
+  --border-color: #6b7a90;
 
-  --text-main: #0f172a;
-  --text-secondary: #5b6472;
+  --text-main: #f8fafc;
+  --text-secondary: #d2d9e3;
 
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
+  --primary: #7c83ff;
+  --primary-hover: #6366f1;
+
+  --accent: #34d399;
 }
 
 html,
