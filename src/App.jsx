@@ -7,11 +7,11 @@ import AppLayout from "./layouts/AppLayout";
 import LoginPage from "./pages/connections/Login";
 import RegisterPage from "./pages/connections/Register";
 import FeedPage from "./pages/Feed";
-import ProfilePage from "./pages/users/profile";
-import EditProfilePage from "./pages/users/Edit";
+import ProfilePage from "./pages/profile/profile";
+import EditProfilePage from "./pages/profile/Edit";
 import MessagesPage from "./pages/messages/Index";
 
-import PublicProfile from "./pages/users/public/PublicProfile";
+import PublicProfile from "./pages/profile/public/PublicProfile";
 
 import { useAuth } from "./context/AuthContext";
 

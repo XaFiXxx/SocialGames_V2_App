@@ -1,9 +1,34 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import {
+  ShieldCheck,
+  Gamepad2,
+  Users,
+  Sparkles,
+  LockKeyhole,
+} from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 const IS_MAINTENANCE = true;
 const ACCESS_CODE = "squadtest2026@@";
+
+function FeaturePill({ icon: Icon, children }) {
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white/80 backdrop-blur-sm">
+      <Icon size={14} />
+      <span>{children}</span>
+    </div>
+  );
+}
+
+function GlassCard({ title, text }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
+      <p className="text-sm font-semibold text-white">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-white/65">{text}</p>
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -31,6 +56,7 @@ export default function LoginPage() {
       sessionStorage.setItem("site_access_granted", "true");
       setIsUnlocked(true);
       setAccessCode("");
+      setServerError("");
       return;
     }
 
@@ -108,29 +134,33 @@ export default function LoginPage() {
   };
 
   const inputClass = (fieldName) =>
-    `w-full rounded-2xl border bg-[var(--bg-main)] px-4 py-3 text-sm text-[var(--text-main)] outline-none transition ${
+    `w-full rounded-2xl border bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none backdrop-blur-sm transition ${
       errors[fieldName]
-        ? "border-red-500 focus:border-red-500"
-        : "border-[var(--border-color)] focus:border-[var(--primary)]"
+        ? "border-red-500/70 focus:border-red-500"
+        : "border-white/10 focus:border-[var(--primary)]"
     }`;
 
   if (IS_MAINTENANCE && !isUnlocked) {
     return (
-      <section className="flex min-h-screen items-center justify-center bg-[var(--bg-main)] px-6 text-[var(--text-main)]">
-        <div className="w-full max-w-md rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-8 shadow-xl">
-          <h1 className="text-2xl font-bold text-center">
-            🚧 Site en construction
+      <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#060816] px-6 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(90,86,255,0.22),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(0,212,255,0.18),_transparent_30%)]" />
+        <div className="absolute left-1/2 top-1/2 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--primary)]/10 blur-3xl" />
+
+        <div className="relative w-full max-w-md rounded-[32px] border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-[var(--primary)] to-cyan-400 text-white shadow-lg">
+            <LockKeyhole size={28} />
+          </div>
+
+          <h1 className="text-center text-3xl font-bold tracking-tight">
+            Accès privé SquadBase
           </h1>
 
-          <p className="mt-4 text-sm text-center text-[var(--text-secondary)]">
-            SquadBase est actuellement en phase de test privée.
+          <p className="mt-4 text-center text-sm leading-6 text-white/65">
+            Le site est encore en phase de construction. Entre le code d’accès
+            temporaire pour continuer.
           </p>
 
-          <p className="mt-2 text-sm text-center text-[var(--text-secondary)]">
-            Entre le code d’accès temporaire pour continuer.
-          </p>
-
-          <form onSubmit={handleUnlock} className="mt-6 space-y-4">
+          <form onSubmit={handleUnlock} className="mt-8 space-y-4">
             <input
               type="password"
               value={accessCode}
@@ -139,18 +169,18 @@ export default function LoginPage() {
                 setServerError("");
               }}
               placeholder="Code d’accès"
-              className="w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-main)] px-4 py-3 text-sm text-[var(--text-main)] outline-none transition focus:border-[var(--primary)]"
+              className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none transition focus:border-[var(--primary)]"
             />
 
             {serverError && (
-              <p className="text-sm text-center text-red-400">{serverError}</p>
+              <p className="text-center text-sm text-red-400">{serverError}</p>
             )}
 
             <button
               type="submit"
-              className="inline-flex w-full items-center justify-center rounded-2xl bg-[var(--primary)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--primary-hover)]"
+              className="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[var(--primary)] to-cyan-400 px-4 py-3 text-sm font-semibold text-white transition hover:scale-[1.01]"
             >
-              Accéder au site
+              Entrer dans SquadBase
             </button>
           </form>
         </div>
@@ -159,75 +189,118 @@ export default function LoginPage() {
   }
 
   return (
-    <section className="bg-[var(--bg-main)] text-[var(--text-main)]">
-      <div className="mx-auto grid min-h-[calc(100vh-8rem)] max-w-7xl lg:grid-cols-2">
-        <div className="hidden border-r border-[var(--border-color)] bg-[var(--bg-secondary)] lg:flex lg:flex-col lg:justify-between lg:p-12">
+    <section className="relative min-h-screen overflow-hidden bg-[#060816] text-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(124,58,237,0.22),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(6,182,212,0.16),_transparent_26%),radial-gradient(circle_at_bottom,_rgba(99,102,241,0.12),_transparent_35%)]" />
+
+      <div className="absolute left-[10%] top-[18%] h-40 w-40 rounded-full bg-fuchsia-500/10 blur-3xl" />
+      <div className="absolute bottom-[10%] right-[8%] h-52 w-52 rounded-full bg-cyan-400/10 blur-3xl" />
+      <div className="absolute left-1/2 top-1/2 h-[560px] w-[560px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--primary)]/10 blur-3xl" />
+
+      <div className="relative mx-auto grid min-h-screen max-w-7xl lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="hidden px-10 py-12 lg:flex lg:flex-col lg:justify-between xl:px-14">
           <div>
-            <span className="inline-flex rounded-full border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
-              SquadBase
-            </span>
+            <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-sm">
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--primary)] to-cyan-400 text-white shadow-lg">
+                <Gamepad2 size={18} />
+              </div>
+              <div>
+                <p className="text-sm font-semibold tracking-wide">SquadBase</p>
+                <p className="text-xs text-white/50">
+                  Le réseau social des gamers
+                </p>
+              </div>
+            </div>
 
-            <h1 className="mt-6 max-w-md text-4xl font-bold tracking-tight">
-              Connecte-toi à ta base communautaire gaming.
-            </h1>
-
-            <p className="mt-4 max-w-lg text-sm leading-7 text-[var(--text-secondary)]">
-              Retrouve ton profil, tes groupes, tes équipes et ton réseau de
-              joueurs dans une plateforme pensée pour centraliser ton univers
-              gaming.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 shadow-sm">
-              <p className="text-sm font-medium text-[var(--text-main)]">
-                Pensé pour les joueurs
+            <div className="mt-12 max-w-2xl">
+              <p className="mb-4 inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-cyan-300">
+                Plateforme communautaire gaming
               </p>
-              <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">
-                Une interface simple pour gérer tes groupes, découvrir des teams
-                et interagir avec la communauté.
+
+              <h1 className="text-5xl font-black leading-tight tracking-tight xl:text-6xl">
+                Rassemble ton
+                <span className="bg-gradient-to-r from-white via-cyan-300 to-violet-400 bg-clip-text text-transparent">
+                  {" "}
+                  univers gaming
+                </span>{" "}
+                au même endroit.
+              </h1>
+
+              <p className="mt-6 max-w-xl text-base leading-8 text-white/65">
+                Retrouve ton profil joueur, partage tes posts, affiche tes jeux,
+                retrouve ta communauté et construis ton identité gaming sur une
+                plateforme pensée pour les joueurs.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-4">
-                <p className="text-xs uppercase tracking-wide text-[var(--text-secondary)]">
-                  Groupes
-                </p>
-                <p className="mt-2 text-lg font-semibold">Communautés</p>
-              </div>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <FeaturePill icon={Users}>Communautés & groupes</FeaturePill>
+              <FeaturePill icon={Sparkles}>Profil gaming stylé</FeaturePill>
+              <FeaturePill icon={ShieldCheck}>Accès sécurisé</FeaturePill>
+            </div>
+          </div>
 
-              <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-4">
-                <p className="text-xs uppercase tracking-wide text-[var(--text-secondary)]">
-                  Teams
-                </p>
-                <p className="mt-2 text-lg font-semibold">Organisation</p>
+          <div className="grid gap-4 xl:grid-cols-2">
+            <GlassCard
+              title="Pensé pour les joueurs"
+              text="Un espace central pour afficher tes jeux, tes plateformes préférées et tes interactions avec la communauté."
+            />
+            <GlassCard
+              title="Social + gaming"
+              text="Posts, profils, groupes, teams et identité visuelle forte dans une interface moderne et immersive."
+            />
+            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/10 to-white/5 p-5 backdrop-blur-md xl:col-span-2">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-white/40">
+                    Profils
+                  </p>
+                  <p className="mt-2 text-xl font-bold">Joueurs</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-white/40">
+                    Réseau
+                  </p>
+                  <p className="mt-2 text-xl font-bold">Communautés</p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-white/40">
+                    Univers
+                  </p>
+                  <p className="mt-2 text-xl font-bold">Gaming</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-center px-6 py-10 sm:px-10">
+        <div className="flex items-center justify-center px-6 py-10 sm:px-8 lg:px-10">
           <div className="w-full max-w-md">
             <div className="mb-8 lg:hidden">
-              <span className="inline-flex rounded-full border border-[var(--border-color)] bg-[var(--bg-card)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
-                SquadBase
-              </span>
-              <h1 className="mt-4 text-3xl font-bold tracking-tight">
+              <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-sm">
+                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--primary)] to-cyan-400 text-white">
+                  <Gamepad2 size={18} />
+                </div>
+                <span className="text-sm font-semibold">SquadBase</span>
+              </div>
+
+              <h1 className="mt-6 text-4xl font-black tracking-tight">
                 Connexion
               </h1>
-              <p className="mt-2 text-sm text-[var(--text-secondary)]">
-                Accède à ton espace joueur.
+              <p className="mt-2 text-sm leading-6 text-white/60">
+                Reconnecte-toi à ton espace joueur et retrouve ton univers.
               </p>
             </div>
 
-            <div className="rounded-3xl border border-[var(--border-color)] bg-[var(--bg-card)] p-8 shadow-xl">
+            <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-xl">
               <div className="mb-8">
-                <h2 className="text-3xl font-semibold tracking-tight">
+                <p className="text-sm font-medium uppercase tracking-[0.2em] text-cyan-300">
+                  Bon retour
+                </p>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight">
                   Heureux de te revoir
                 </h2>
-                <p className="mt-2 text-sm text-[var(--text-secondary)]">
-                  Entre tes identifiants pour continuer sur SquadBase.
+                <p className="mt-2 text-sm leading-6 text-white/60">
+                  Entre tes identifiants pour accéder à SquadBase.
                 </p>
               </div>
 
@@ -235,7 +308,7 @@ export default function LoginPage() {
                 <div>
                   <label
                     htmlFor="email"
-                    className="mb-2 block text-sm font-medium text-[var(--text-main)]"
+                    className="mb-2 block text-sm font-medium text-white/85"
                   >
                     Adresse email
                   </label>
@@ -257,14 +330,14 @@ export default function LoginPage() {
                   <div className="mb-2 flex items-center justify-between gap-4">
                     <label
                       htmlFor="password"
-                      className="block text-sm font-medium text-[var(--text-main)]"
+                      className="block text-sm font-medium text-white/85"
                     >
                       Mot de passe
                     </label>
 
                     <Link
                       to="#"
-                      className="text-sm text-[var(--primary)] transition hover:opacity-80"
+                      className="text-sm text-cyan-300 transition hover:text-cyan-200"
                     >
                       Mot de passe oublié ?
                     </Link>
@@ -287,43 +360,49 @@ export default function LoginPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-3 text-sm text-[var(--text-secondary)]">
+                  <label className="flex items-center gap-3 text-sm text-white/60">
                     <input
                       type="checkbox"
                       name="remember"
                       checked={form.remember}
                       onChange={handleChange}
-                      className="h-4 w-4 rounded border-[var(--border-color)] bg-[var(--bg-main)]"
+                      className="h-4 w-4 rounded border-white/20 bg-transparent"
                     />
                     Se souvenir de moi
                   </label>
                 </div>
 
                 {serverError && (
-                  <p className="text-sm text-red-400">{serverError}</p>
+                  <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+                    {serverError}
+                  </div>
                 )}
 
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="inline-flex w-full items-center justify-center rounded-2xl bg-[var(--primary)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--primary-hover)] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[var(--primary)] to-cyan-400 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isSubmitting ? "Connexion en cours..." : "Se connecter"}
                 </button>
               </form>
 
-              <div className="mt-6 border-t border-[var(--border-color)] pt-6 text-center">
-                <p className="text-sm text-[var(--text-secondary)]">
+              <div className="mt-6 border-t border-white/10 pt-6 text-center">
+                <p className="text-sm text-white/60">
                   Pas encore de compte ?{" "}
                   <Link
                     to="/register"
-                    className="font-medium text-[var(--primary)] transition hover:opacity-80"
+                    className="font-semibold text-cyan-300 transition hover:text-cyan-200"
                   >
                     Créer un compte
                   </Link>
                 </p>
               </div>
             </div>
+
+            <p className="mt-6 text-center text-xs text-white/35">
+              SquadBase — connecte les joueurs, les jeux et les communautés.
+            </p>
           </div>
         </div>
       </div>
