@@ -15,7 +15,7 @@ export default function NavbarSearch({
   const shouldShowDropdown = isSearchOpen && trimmedQuery.length >= 2;
 
   return (
-    <div ref={searchRef} className="relative w-full max-w-xl">
+    <div ref={searchRef} className="relative w-full max-w-2xl">
       <Search
         className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"
         size={18}
@@ -34,7 +34,7 @@ export default function NavbarSearch({
           }
         }}
         placeholder="Rechercher un joueur..."
-        className="w-full rounded-2xl border border-[var(--border-color)] bg-[var(--bg-main)] py-3 pl-11 pr-11 text-sm text-[var(--text-main)] outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--primary)]"
+        className="w-full rounded-[20px] border border-white/10 bg-white/5 py-3 pl-11 pr-11 text-sm text-[var(--text-main)] shadow-[0_8px_24px_rgba(0,0,0,0.10)] outline-none transition placeholder:text-[var(--text-secondary)] focus:border-cyan-400 focus:bg-white/8"
       />
 
       {searchQuery && (
@@ -44,14 +44,14 @@ export default function NavbarSearch({
             setSearchQuery("");
             setIsSearchOpen(false);
           }}
-          className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)] transition hover:text-[var(--text-main)]"
+          className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1 text-[var(--text-secondary)] transition hover:bg-white/10 hover:text-[var(--text-main)]"
         >
           <X size={16} />
         </button>
       )}
 
       {shouldShowDropdown && (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] overflow-hidden rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] shadow-2xl">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] overflow-hidden rounded-[24px] border border-white/10 bg-[color:var(--bg-card)]/92 shadow-[0_20px_50px_rgba(0,0,0,0.28)] backdrop-blur-2xl">
           {isSearching ? (
             <div className="px-4 py-4 text-sm text-[var(--text-secondary)]">
               Recherche en cours...
@@ -76,9 +76,9 @@ export default function NavbarSearch({
                     key={result.id}
                     type="button"
                     onClick={() => onOpenUser(result.id)}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition hover:bg-[var(--bg-main)]"
+                    className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-left transition hover:bg-white/10"
                   >
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[var(--bg-main)] text-sm font-bold text-[var(--text-main)]">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--primary)] to-cyan-400 text-sm font-bold text-white">
                       {avatarSrc ? (
                         <img
                           src={avatarSrc}

@@ -262,19 +262,29 @@ export default function Navbar() {
     return "U";
   }, [user]);
 
+  const avatarSrc = useMemo(() => {
+    return getImageUrl(user?.avatar_url);
+  }, [user]);
+
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-[var(--border-color)] bg-[var(--bg-card)]/90 backdrop-blur">
-        <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link to="/feed" className="flex items-center gap-3">
-              <img
-                src={isLight ? "/img/LogoBlanc.png" : "/img/Logo.png"}
-                alt="SquadBase"
-                className="h-10"
-              />
+      <header className="sticky top-0 z-50 border-b border-white/10 bg-[color:var(--bg-card)]/75 backdrop-blur-xl">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <div className="min-w-0 flex items-center gap-3">
+            <Link
+              to="/feed"
+              className="group flex items-center gap-3 rounded-2xl px-2 py-2 transition hover:bg-white/5"
+            >
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/5 shadow-[0_8px_24px_rgba(0,0,0,0.18)]">
+                <img
+                  src={isLight ? "/img/LogoBlanc.png" : "/img/Logo.png"}
+                  alt="SquadBase"
+                  className="h-8 w-auto"
+                />
+              </div>
+
               <div className="hidden sm:block">
-                <h1 className="text-lg font-bold text-[var(--text-main)]">
+                <h1 className="text-lg font-black tracking-tight text-[var(--text-main)]">
                   SquadBase
                 </h1>
                 <p className="text-xs text-[var(--text-secondary)]">
@@ -284,7 +294,7 @@ export default function Navbar() {
             </Link>
           </div>
 
-          <div className="hidden flex-1 justify-center md:flex">
+          <div className="hidden flex-1 justify-center px-2 md:flex">
             <NavbarSearch
               searchRef={searchRef}
               searchQuery={searchQuery}
@@ -298,18 +308,18 @@ export default function Navbar() {
             />
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <button
               type="button"
               onClick={handleMessagesClick}
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border-color)] bg-[var(--bg-main)] text-[var(--text-main)] transition hover:opacity-90"
+              className="relative flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-[var(--text-main)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition hover:bg-white/10"
             >
               <MessageSquare size={18} />
 
               {messageUnreadCount > 0 && (
                 <>
                   <span className="absolute right-2 top-2 h-2.5 w-2.5 rounded-full bg-red-500" />
-                  <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  <span className="absolute -right-1 -top-1 inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-md">
                     {messageUnreadCount > 9 ? "9+" : messageUnreadCount}
                   </span>
                 </>
@@ -320,6 +330,7 @@ export default function Navbar() {
 
             <NavbarProfileMenu
               user={user}
+              avatarSrc={avatarSrc}
               displayName={displayName}
               userInitials={userInitials}
               isOpen={isProfileMenuOpen}
