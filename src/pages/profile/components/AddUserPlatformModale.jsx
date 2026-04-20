@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { X, Search, Gamepad2, Star, Pencil } from "lucide-react";
-
-const SKILL_LEVELS = [
-  "Débutant",
-  "Intermédiaire",
-  "Avancé",
-  "Compétitif",
-];
+import { X, Search, Monitor, Pencil } from "lucide-react";
 
 export default function AddUserPlatformModal({
   isOpen,
@@ -18,19 +11,16 @@ export default function AddUserPlatformModal({
   initialPlatform = null,
 }) {
   const isEditMode = mode === "edit";
+  const safePlatforms = Array.isArray(platforms) ? platforms : [];
 
   const [search, setSearch] = useState("");
   const [selectedPlatformId, setSelectedPlatformId] = useState("");
-  const [skillLevel, setSkillLevel] = useState("");
-  const [favorite, setFavorite] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (!isOpen) {
       setSearch("");
       setSelectedPlatformId("");
-      setSkillLevel("");
-      setFavorite(false);
       setErrorMessage("");
       return;
     }
@@ -38,20 +28,12 @@ export default function AddUserPlatformModal({
     if (isEditMode && initialPlatform) {
       setSearch(initialPlatform.name || "");
       setSelectedPlatformId(String(initialPlatform.id || ""));
-      setSkillLevel(
-        initialPlatform.skill_level ?? initialPlatform.pivot?.skill_level ?? ""
-      );
-      setFavorite(
-        Boolean(initialPlatform.favorite ?? initialPlatform.pivot?.favorite)
-      );
       setErrorMessage("");
       return;
     }
 
     setSearch("");
     setSelectedPlatformId("");
-    setSkillLevel("");
-    setFavorite(false);
     setErrorMessage("");
   }, [isOpen, isEditMode, initialPlatform]);
 
@@ -62,28 +44,32 @@ export default function AddUserPlatformModal({
 
     const normalizedSearch = search.trim().toLowerCase();
 
-    if (!normalizedSearch) return platforms;
+    if (!normalizedSearch) return safePlatforms;
 
-    return platforms.filter((platform) => {
+    return safePlatforms.filter((platform) => {
       const name = platform?.name?.toLowerCase() || "";
-      const developer = platform?.developer?.toLowerCase() || "";
-      const publisher = platform?.publisher?.toLowerCase() || "";
+      const manufacturer = platform?.manufacturer?.toLowerCase() || "";
+      const brand = platform?.brand?.toLowerCase() || "";
+      const slug = platform?.slug?.toLowerCase() || "";
 
       return (
         name.includes(normalizedSearch) ||
-        developer.includes(normalizedSearch) ||
-        publisher.includes(normalizedSearch)
+        manufacturer.includes(normalizedSearch) ||
+        brand.includes(normalizedSearch) ||
+        slug.includes(normalizedSearch)
       );
     });
-  }, [platforms, search, isEditMode, initialPlatform]);
+  }, [safePlatforms, search, isEditMode, initialPlatform]);
 
   const selectedPlatform = useMemo(() => {
     if (isEditMode && initialPlatform) return initialPlatform;
 
     return (
-      platforms.find((platform) => String(platform.id) === String(selectedPlatformId)) || null
+      safePlatforms.find(
+        (platform) => String(platform.id) === String(selectedPlatformId)
+      ) || null
     );
-  }, [platforms, selectedPlatformId, isEditMode, initialPlatform]);
+  }, [safePlatforms, selectedPlatformId, isEditMode, initialPlatform]);
 
   const handleClose = () => {
     if (isSubmitting) return;
@@ -102,8 +88,6 @@ export default function AddUserPlatformModal({
 
     const payload = {
       platform_id: Number(selectedPlatformId),
-      skill_level: skillLevel || null,
-      favorite,
     };
 
     if (onSubmit) {
@@ -134,12 +118,14 @@ export default function AddUserPlatformModal({
                   Plateformes joueur
                 </p>
                 <h2 className="mt-2 text-2xl font-black text-white">
-                  {isEditMode ? "Modifier un jeu" : "Ajouter un jeu"}
+                  {isEditMode
+                    ? "Modifier une plateforme"
+                    : "Ajouter une plateforme"}
                 </h2>
                 <p className="mt-2 text-sm text-white/80">
                   {isEditMode
-                    ? "Ajuste ton niveau et définis si ce jeu doit être mis en avant sur ton profil."
-                    : "Sélectionne un jeu, définis ton niveau et marque-le comme favori si tu le souhaites."}
+                    ? "Vérifie la plateforme sélectionnée sur ton profil."
+                    : "Sélectionne la plateforme que tu utilises pour jouer."}
                 </p>
               </div>
 
@@ -159,21 +145,23 @@ export default function AddUserPlatformModal({
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.9fr)]">
               <div>
                 <label className="mb-2 block text-sm font-medium text-[var(--text-main)]">
-                  {isEditMode ? "Jeu sélectionné" : "Rechercher un jeu"}
+                  {isEditMode
+                    ? "Plateforme sélectionnée"
+                    : "Rechercher une plateforme"}
                 </label>
 
                 {isEditMode ? (
                   <div className="rounded-[24px] border border-white/10 bg-[var(--bg-secondary)] p-3">
                     <div className="flex items-center gap-3 rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-3">
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/5">
-                        {selectedGame?.cover_img ? (
+                        {selectedPlatform?.logo ? (
                           <img
-                            src={selectedGame.cover_img}
-                            alt={selectedGame.name}
+                            src={selectedPlatform.logo}
+                            alt={selectedPlatform.name}
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <Gamepad2
+                          <Monitor
                             size={18}
                             className="text-[var(--text-secondary)]"
                           />
@@ -182,11 +170,12 @@ export default function AddUserPlatformModal({
 
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-[var(--text-main)]">
-                          {selectedGame?.name || "Jeu inconnu"}
+                          {selectedPlatform?.name || "Plateforme inconnue"}
                         </p>
                         <p className="truncate text-xs text-[var(--text-secondary)]">
-                          {selectedGame?.developer ||
-                            selectedGame?.publisher ||
+                          {selectedPlatform?.manufacturer ||
+                            selectedPlatform?.brand ||
+                            selectedPlatform?.slug ||
                             "Informations non renseignées"}
                         </p>
                       </div>
@@ -207,7 +196,7 @@ export default function AddUserPlatformModal({
                         type="text"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Ex: Valorant, League of Legends, EA FC..."
+                        placeholder="Ex: PC, PlayStation 5, Xbox Series, Switch..."
                         className="w-full rounded-2xl border border-white/10 bg-[var(--bg-secondary)] px-4 py-3 pl-11 text-sm text-[var(--text-main)] outline-none transition placeholder:text-[var(--text-secondary)] focus:border-cyan-400"
                       />
                     </div>
@@ -215,26 +204,27 @@ export default function AddUserPlatformModal({
                     <div className="mt-4 rounded-[24px] border border-white/10 bg-[var(--bg-secondary)] p-3">
                       <div className="mb-3 flex items-center justify-between gap-3 px-1">
                         <p className="text-sm font-medium text-[var(--text-main)]">
-                          Jeux disponibles
+                          Plateformes disponibles
                         </p>
                         <p className="text-xs text-[var(--text-secondary)]">
-                          {filteredGames.length} résultat
-                          {filteredGames.length > 1 ? "s" : ""}
+                          {filteredPlatforms.length} résultat
+                          {filteredPlatforms.length > 1 ? "s" : ""}
                         </p>
                       </div>
 
                       <div className="max-h-[360px] space-y-2 overflow-y-auto pr-1">
-                        {filteredGames.length > 0 ? (
-                          filteredGames.map((game) => {
+                        {filteredPlatforms.length > 0 ? (
+                          filteredPlatforms.map((platform) => {
                             const isSelected =
-                              String(selectedGameId) === String(game.id);
+                              String(selectedPlatformId) ===
+                              String(platform.id);
 
                             return (
                               <button
-                                key={game.id}
+                                key={platform.id}
                                 type="button"
                                 onClick={() => {
-                                  setSelectedGameId(String(game.id));
+                                  setSelectedPlatformId(String(platform.id));
                                   setErrorMessage("");
                                 }}
                                 className={`flex w-full items-center gap-3 rounded-2xl border px-3 py-3 text-left transition ${
@@ -244,14 +234,14 @@ export default function AddUserPlatformModal({
                                 }`}
                               >
                                 <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white/5">
-                                  {game.cover_img ? (
+                                  {platform.logo ? (
                                     <img
-                                      src={game.cover_img}
-                                      alt={game.name}
+                                      src={platform.logo}
+                                      alt={platform.name}
                                       className="h-full w-full object-cover"
                                     />
                                   ) : (
-                                    <Gamepad2
+                                    <Monitor
                                       size={18}
                                       className="text-[var(--text-secondary)]"
                                     />
@@ -260,11 +250,12 @@ export default function AddUserPlatformModal({
 
                                 <div className="min-w-0 flex-1">
                                   <p className="truncate text-sm font-semibold text-[var(--text-main)]">
-                                    {game.name}
+                                    {platform.name}
                                   </p>
                                   <p className="truncate text-xs text-[var(--text-secondary)]">
-                                    {game.developer ||
-                                      game.publisher ||
+                                    {platform.manufacturer ||
+                                      platform.brand ||
+                                      platform.slug ||
                                       "Informations non renseignées"}
                                   </p>
                                 </div>
@@ -273,7 +264,7 @@ export default function AddUserPlatformModal({
                           })
                         ) : (
                           <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-[var(--text-secondary)]">
-                            Aucun jeu ne correspond à la recherche.
+                            Aucune plateforme ne correspond à la recherche.
                           </div>
                         )}
                       </div>
@@ -285,80 +276,36 @@ export default function AddUserPlatformModal({
               <div className="space-y-5">
                 <div className="rounded-[24px] border border-white/10 bg-[var(--bg-secondary)] p-5">
                   <h3 className="text-sm font-semibold text-[var(--text-main)]">
-                    Paramètres du jeu
-                  </h3>
-
-                  <div className="mt-4 space-y-4">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium text-[var(--text-main)]">
-                        Niveau
-                      </label>
-                      <select
-                        value={skillLevel}
-                        onChange={(e) => setSkillLevel(e.target.value)}
-                        className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-[var(--text-main)] outline-none transition focus:border-cyan-400"
-                      >
-                        <option value="">Non renseigné</option>
-                        {SKILL_LEVELS.map((level) => (
-                          <option key={level} value={level}>
-                            {level}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 transition hover:bg-white/10">
-                      <input
-                        type="checkbox"
-                        checked={favorite}
-                        onChange={(e) => setFavorite(e.target.checked)}
-                        className="mt-1 h-4 w-4 rounded border-white/10 bg-white/5"
-                      />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <Star size={14} className="text-amber-300" />
-                          <p className="text-sm font-medium text-[var(--text-main)]">
-                            Marquer comme favori
-                          </p>
-                        </div>
-                        <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                          Ce jeu pourra être mis en avant sur ton profil.
-                        </p>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                <div className="rounded-[24px] border border-white/10 bg-[var(--bg-secondary)] p-5">
-                  <h3 className="text-sm font-semibold text-[var(--text-main)]">
                     Aperçu
                   </h3>
 
                   <div className="mt-4 space-y-3">
                     <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                       <p className="text-xs uppercase tracking-widest text-[var(--text-secondary)]">
-                        Jeu sélectionné
+                        Plateforme sélectionnée
                       </p>
                       <p className="mt-2 text-sm font-medium text-[var(--text-main)]">
-                        {selectedGame?.name || "Aucun jeu sélectionné"}
+                        {selectedPlatform?.name || "Aucune plateforme sélectionnée"}
                       </p>
                     </div>
 
                     <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                       <p className="text-xs uppercase tracking-widest text-[var(--text-secondary)]">
-                        Niveau
+                        Fabricant / marque
                       </p>
                       <p className="mt-2 text-sm font-medium text-[var(--text-main)]">
-                        {skillLevel || "Non renseigné"}
+                        {selectedPlatform?.manufacturer ||
+                          selectedPlatform?.brand ||
+                          "Non renseigné"}
                       </p>
                     </div>
 
                     <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
                       <p className="text-xs uppercase tracking-widest text-[var(--text-secondary)]">
-                        Favori
+                        Identifiant
                       </p>
                       <p className="mt-2 text-sm font-medium text-[var(--text-main)]">
-                        {favorite ? "Oui" : "Non"}
+                        {selectedPlatform?.slug || "Non renseigné"}
                       </p>
                     </div>
                   </div>
@@ -390,8 +337,8 @@ export default function AddUserPlatformModal({
                     ? "Mise à jour..."
                     : "Ajout..."
                   : isEditMode
-                  ? "Enregistrer les modifications"
-                  : "Ajouter le jeu"}
+                    ? "Enregistrer les modifications"
+                    : "Ajouter la plateforme"}
               </button>
             </div>
           </form>

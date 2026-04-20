@@ -50,42 +50,6 @@ export default function PublicProfileMainColumn({
         </div>
       </GlassCard>
 
-      <GlassCard title="Plateformes">
-        {platforms.length > 0 ? (
-          <div className="flex flex-wrap gap-3">
-            {platforms.map((platform) => (
-              <div
-                key={platform.id}
-                className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm"
-              >
-                <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/5">
-                  {platform.logo ? (
-                    <img
-                      src={getImageUrl(platform.logo)}
-                      alt={platform.name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <Monitor
-                      size={18}
-                      className="text-[var(--text-secondary)]"
-                    />
-                  )}
-                </div>
-
-                <span className="text-sm font-medium text-[var(--text-main)]">
-                  {platform.name}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-[var(--text-secondary)]">
-            Aucune plateforme ajoutée pour le moment.
-          </div>
-        )}
-      </GlassCard>
-
       <GlassCard
         title="Jeux"
         action={

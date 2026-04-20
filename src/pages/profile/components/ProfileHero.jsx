@@ -1,5 +1,14 @@
 import { Link } from "react-router";
-import { Upload, Sparkles, ShieldCheck, Users, UserRound, Swords, Gamepad2 } from "lucide-react";
+import {
+  Upload,
+  Sparkles,
+  ShieldCheck,
+  Users,
+  UserRound,
+  Swords,
+  Gamepad2,
+  Monitor,
+} from "lucide-react";
 import StatTile from "./StatTile";
 
 export default function ProfileHero({
@@ -13,6 +22,8 @@ export default function ProfileHero({
   friendsCount,
   gamesCount,
   profileBadges,
+  platforms = [],
+  getImageUrl,
   openModal,
 }) {
   return (
@@ -118,6 +129,42 @@ export default function ProfileHero({
                 {user?.newsletter ? "Newsletter activée" : "Newsletter désactivée"}
               </span>
             </div>
+
+            {platforms.length > 0 ? (
+              <div className="mt-6">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-secondary)]">
+                  Plateformes
+                </p>
+
+                <div className="flex flex-wrap gap-3">
+                  {platforms.map((platform) => (
+                    <div
+                      key={platform.id}
+                      className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm"
+                    >
+                      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/5">
+                        {platform.logo ? (
+                          <img
+                            src={getImageUrl(platform.logo)}
+                            alt={platform.name}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <Monitor
+                            size={18}
+                            className="text-[var(--text-secondary)]"
+                          />
+                        )}
+                      </div>
+
+                      <span className="text-sm font-medium text-[var(--text-main)]">
+                        {platform.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

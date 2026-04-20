@@ -9,6 +9,7 @@ import ProfileSidebar from "./components/ProfileSidebar";
 import ProfileImageModal from "./components/ProfileImageModal";
 import ProfilePostsSection from "./components/ProfilePostsSection";
 import AddUserGameModal from "./components/AddUserGameModal";
+import AddUserPlatformModal from "./components/AddUserPlatformModale";
 
 import {
   getImageUrl,
@@ -31,17 +32,30 @@ export default function ProfilePage() {
   const [imageVersion, setImageVersion] = useState(Date.now());
 
   const [availableGames, setAvailableGames] = useState([]);
+  const [availablePlatforms, setAvailablePlatforms] = useState([]);
   const [isLoadingAvailableGames, setIsLoadingAvailableGames] = useState(false);
+  const [isLoadingAvailablePlatforms, setIsLoadingAvailablePlatforms] =
+    useState(false);
 
   const [isAddGameModalOpen, setIsAddGameModalOpen] = useState(false);
   const [isEditGameModalOpen, setIsEditGameModalOpen] = useState(false);
+  const [isAddPlatformModalOpen, setIsAddPlatformModalOpen] = useState(false);
+  const [isEditPlatformModalOpen, setIsEditPlatformModalOpen] = useState(false);
 
   const [isSubmittingAddGame, setIsSubmittingAddGame] = useState(false);
   const [isSubmittingEditGame, setIsSubmittingEditGame] = useState(false);
   const [isDeletingGame, setIsDeletingGame] = useState(false);
 
+  const [isSubmittingAddPlatform, setIsSubmittingAddPlatform] = useState(false);
+  const [isSubmittingEditPlatform, setIsSubmittingEditPlatform] =
+    useState(false);
+  const [isDeletingPlatform, setIsDeletingPlatform] = useState(false);
+
   const [addGameError, setAddGameError] = useState("");
+  const [addPlatformError, setAddPlatformError] = useState("");
+
   const [selectedGame, setSelectedGame] = useState(null);
+  const [selectedPlatform, setSelectedPlatform] = useState(null);
 
   const fetchProfile = async () => {
     try {
@@ -67,6 +81,22 @@ export default function ProfilePage() {
       setAvailableGames([]);
     } finally {
       setIsLoadingAvailableGames(false);
+    }
+  };
+
+  const fetchAvailablePlatforms = async () => {
+    try {
+      setIsLoadingAvailablePlatforms(true);
+      setAddPlatformError("");
+
+      const { data } = await api.get("/api/platforms");
+      setAvailablePlatforms(Array.isArray(data) ? data : data?.data ?? []);
+    } catch (error) {
+      console.error("Erreur chargement catalogue plateformes :", error);
+      setAddPlatformError("Impossible de charger la liste des plateformes.");
+      setAvailablePlatforms([]);
+    } finally {
+      setIsLoadingAvailablePlatforms(false);
     }
   };
 
@@ -132,16 +162,13 @@ export default function ProfilePage() {
   };
 
   const handleDeleteGame = async (game) => {
-    const confirmed = window.confirm(
-      `Retirer "${game.name}" de ton profil ?`
-    );
-
+    const confirmed = window.confirm(`Retirer "${game.name}" de ton profil ?`);
     if (!confirmed) return;
 
     try {
       setIsDeletingGame(true);
       setAddGameError("");
-      await api.delete(`/api/games/${game.id}`);
+      await api.delete(`/api/user/games/${game.id}`);
       await fetchProfile();
     } catch (error) {
       console.error("Erreur suppression jeu :", error);
@@ -159,7 +186,7 @@ export default function ProfilePage() {
       setIsSubmittingAddGame(true);
       setAddGameError("");
 
-      await api.post("/api/games", payload);
+      await api.post("/api/user/games", payload);
 
       await fetchProfile();
       setIsAddGameModalOpen(false);
@@ -182,7 +209,7 @@ export default function ProfilePage() {
       setIsSubmittingEditGame(true);
       setAddGameError("");
 
-      await api.patch(`/api/games/${selectedGame.id}`, {
+      await api.patch(`/api/user/games/${selectedGame.id}`, {
         skill_level: payload.skill_level,
         favorite: payload.favorite,
       });
@@ -199,6 +226,106 @@ export default function ProfilePage() {
       throw error;
     } finally {
       setIsSubmittingEditGame(false);
+    }
+  };
+
+  const handleOpenAddPlatformModal = async () => {
+    setSelectedPlatform(null);
+    setAddPlatformError("");
+    setIsAddPlatformModalOpen(true);
+
+    if (availablePlatforms.length === 0) {
+      await fetchAvailablePlatforms();
+    }
+  };
+
+  const handleCloseAddPlatformModal = () => {
+    if (isSubmittingAddPlatform) return;
+    setIsAddPlatformModalOpen(false);
+    setAddPlatformError("");
+  };
+
+  const handleOpenEditPlatformModal = async (platform) => {
+    setSelectedPlatform(platform);
+    setAddPlatformError("");
+    setIsEditPlatformModalOpen(true);
+
+    if (availablePlatforms.length === 0) {
+      await fetchAvailablePlatforms();
+    }
+  };
+
+  const handleCloseEditPlatformModal = () => {
+    if (isSubmittingEditPlatform) return;
+    setIsEditPlatformModalOpen(false);
+    setSelectedPlatform(null);
+    setAddPlatformError("");
+  };
+
+  const handleDeletePlatform = async (platform) => {
+    const confirmed = window.confirm(
+      `Retirer "${platform.name}" de ton profil ?`
+    );
+    if (!confirmed) return;
+
+    try {
+      setIsDeletingPlatform(true);
+      setAddPlatformError("");
+      await api.delete(`/api/user/platforms/${platform.id}`);
+      await fetchProfile();
+    } catch (error) {
+      console.error("Erreur suppression plateforme :", error);
+      setAddPlatformError(
+        error.response?.data?.message ||
+          "Impossible de supprimer cette plateforme du profil."
+      );
+    } finally {
+      setIsDeletingPlatform(false);
+    }
+  };
+
+  const handleAddUserPlatform = async (payload) => {
+    try {
+      setIsSubmittingAddPlatform(true);
+      setAddPlatformError("");
+
+      await api.post("/api/user/platforms", payload);
+
+      await fetchProfile();
+      setIsAddPlatformModalOpen(false);
+    } catch (error) {
+      console.error("Erreur ajout plateforme utilisateur :", error);
+      setAddPlatformError(
+        error.response?.data?.message ||
+          "Impossible d'ajouter cette plateforme au profil."
+      );
+      throw error;
+    } finally {
+      setIsSubmittingAddPlatform(false);
+    }
+  };
+
+  const handleUpdateUserPlatform = async (payload) => {
+    if (!selectedPlatform) return;
+
+    try {
+      setIsSubmittingEditPlatform(true);
+      setAddPlatformError("");
+
+      await api.patch(`/api/user/platforms/${selectedPlatform.id}`, payload);
+
+      await fetchProfile();
+      setIsEditPlatformModalOpen(false);
+      setSelectedPlatform(null);
+    } catch (error) {
+      console.error("Erreur modification plateforme utilisateur :", error);
+      setAddPlatformError(
+        error.response?.data?.message ||
+          "Impossible de modifier cette plateforme du profil."
+      );
+      throw error;
+    } finally {
+      setIsSubmittingEditPlatform(false);
     }
   };
 
@@ -270,11 +397,22 @@ export default function ProfilePage() {
     return badges;
   }, [user?.location, user?.created_at, followersCount, friendsCount]);
 
-  const availableGamesWithImages = availableGames.map((game) => ({
+  const availableGamesWithImages = (Array.isArray(availableGames)
+    ? availableGames
+    : []
+  ).map((game) => ({
     ...game,
     cover_img: game.cover_img
       ? getImageUrl(game.cover_img, imageVersion)
       : null,
+  }));
+
+  const availablePlatformsWithImages = (Array.isArray(availablePlatforms)
+    ? availablePlatforms
+    : []
+  ).map((platform) => ({
+    ...platform,
+    logo: platform.logo ? getImageUrl(platform.logo, imageVersion) : null,
   }));
 
   const selectedGameWithImage = selectedGame
@@ -282,6 +420,15 @@ export default function ProfilePage() {
         ...selectedGame,
         cover_img: selectedGame.cover_img
           ? getImageUrl(selectedGame.cover_img, imageVersion)
+          : null,
+      }
+    : null;
+
+  const selectedPlatformWithImage = selectedPlatform
+    ? {
+        ...selectedPlatform,
+        logo: selectedPlatform.logo
+          ? getImageUrl(selectedPlatform.logo, imageVersion)
           : null,
       }
     : null;
@@ -316,7 +463,8 @@ export default function ProfilePage() {
           followingCount={followingCount}
           friendsCount={friendsCount}
           gamesCount={gamesCount}
-          platformsCount={platformsCount}
+          platforms={platforms}
+          getImageUrl={(path) => getImageUrl(path, imageVersion)}
           profileBadges={profileBadges}
           openModal={openModal}
         />
@@ -336,6 +484,9 @@ export default function ProfilePage() {
             onOpenAddGameModal={handleOpenAddGameModal}
             onEditGame={handleOpenEditGameModal}
             onDeleteGame={handleDeleteGame}
+            onOpenAddPlatformModal={handleOpenAddPlatformModal}
+            onEditPlatform={handleOpenEditPlatformModal}
+            onDeletePlatform={handleDeletePlatform}
           />
 
           <ProfileSidebar
@@ -391,11 +542,45 @@ export default function ProfilePage() {
         initialGame={selectedGameWithImage}
       />
 
+      <AddUserPlatformModal
+        isOpen={isAddPlatformModalOpen}
+        onClose={handleCloseAddPlatformModal}
+        platforms={availablePlatformsWithImages}
+        onSubmit={handleAddUserPlatform}
+        isSubmitting={
+          isSubmittingAddPlatform || isLoadingAvailablePlatforms
+        }
+        mode="add"
+      />
+
+      <AddUserPlatformModal
+        isOpen={isEditPlatformModalOpen}
+        onClose={handleCloseEditPlatformModal}
+        platforms={availablePlatformsWithImages}
+        onSubmit={handleUpdateUserPlatform}
+        isSubmitting={
+          isSubmittingEditPlatform || isLoadingAvailablePlatforms
+        }
+        mode="edit"
+        initialPlatform={selectedPlatformWithImage}
+      />
+
       {addGameError &&
       (isAddGameModalOpen || isEditGameModalOpen || isDeletingGame) ? (
         <div className="fixed bottom-4 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 px-4">
           <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-300 backdrop-blur-md">
             {addGameError}
+          </div>
+        </div>
+      ) : null}
+
+      {addPlatformError &&
+      (isAddPlatformModalOpen ||
+        isEditPlatformModalOpen ||
+        isDeletingPlatform) ? (
+        <div className="fixed bottom-20 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 px-4">
+          <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-300 backdrop-blur-md">
+            {addPlatformError}
           </div>
         </div>
       ) : null}

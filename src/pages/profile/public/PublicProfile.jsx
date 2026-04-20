@@ -21,7 +21,7 @@ export default function PublicProfile() {
   const [modal, setModal] = useState({ type: null, isOpen: false });
 
   const openModal = (type) => setModal({ type, isOpen: true });
-  const closeModal = () => setModal({ type: null, isOpen: false });
+  const closeModal = () => setModal({ type, isOpen: false });
 
   const getImageUrl = (path) => {
     if (!path) return null;
@@ -232,6 +232,8 @@ export default function PublicProfile() {
           friendsCount={friendsCount}
           gamesCount={gamesCount}
           profileBadges={profileBadges}
+          platforms={platforms}
+          getImageUrl={getImageUrl}
           isOwnProfile={isOwnProfile}
           actionLoading={actionLoading}
           openModal={openModal}
