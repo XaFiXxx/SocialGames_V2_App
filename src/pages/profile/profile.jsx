@@ -8,6 +8,7 @@ import ProfileMainColumn from "./components/ProfileMainColumn";
 import ProfileSidebar from "./components/ProfileSidebar";
 import ProfileImageModal from "./components/ProfileImageModal";
 import ProfilePostsSection from "./components/ProfilePostsSection";
+import AddUserGameModal from "./components/AddUserGameModal";
 
 import {
   getImageUrl,
@@ -29,6 +30,19 @@ export default function ProfilePage() {
   });
   const [imageVersion, setImageVersion] = useState(Date.now());
 
+  const [availableGames, setAvailableGames] = useState([]);
+  const [isLoadingAvailableGames, setIsLoadingAvailableGames] = useState(false);
+
+  const [isAddGameModalOpen, setIsAddGameModalOpen] = useState(false);
+  const [isEditGameModalOpen, setIsEditGameModalOpen] = useState(false);
+
+  const [isSubmittingAddGame, setIsSubmittingAddGame] = useState(false);
+  const [isSubmittingEditGame, setIsSubmittingEditGame] = useState(false);
+  const [isDeletingGame, setIsDeletingGame] = useState(false);
+
+  const [addGameError, setAddGameError] = useState("");
+  const [selectedGame, setSelectedGame] = useState(null);
+
   const fetchProfile = async () => {
     try {
       const { data } = await api.get("/api/profile");
@@ -37,6 +51,22 @@ export default function ProfilePage() {
       console.error("Erreur chargement profil :", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchAvailableGames = async () => {
+    try {
+      setIsLoadingAvailableGames(true);
+      setAddGameError("");
+
+      const { data } = await api.get("/api/games");
+      setAvailableGames(Array.isArray(data) ? data : data?.data ?? []);
+    } catch (error) {
+      console.error("Erreur chargement catalogue jeux :", error);
+      setAddGameError("Impossible de charger la liste des jeux.");
+      setAvailableGames([]);
+    } finally {
+      setIsLoadingAvailableGames(false);
     }
   };
 
@@ -66,6 +96,110 @@ export default function ProfilePage() {
 
   const closeModal = () => {
     setModal({ type: null, isOpen: false });
+  };
+
+  const handleOpenAddGameModal = async () => {
+    setSelectedGame(null);
+    setAddGameError("");
+    setIsAddGameModalOpen(true);
+
+    if (availableGames.length === 0) {
+      await fetchAvailableGames();
+    }
+  };
+
+  const handleCloseAddGameModal = () => {
+    if (isSubmittingAddGame) return;
+    setIsAddGameModalOpen(false);
+    setAddGameError("");
+  };
+
+  const handleOpenEditGameModal = async (game) => {
+    setSelectedGame(game);
+    setAddGameError("");
+    setIsEditGameModalOpen(true);
+
+    if (availableGames.length === 0) {
+      await fetchAvailableGames();
+    }
+  };
+
+  const handleCloseEditGameModal = () => {
+    if (isSubmittingEditGame) return;
+    setIsEditGameModalOpen(false);
+    setSelectedGame(null);
+    setAddGameError("");
+  };
+
+  const handleDeleteGame = async (game) => {
+    const confirmed = window.confirm(
+      `Retirer "${game.name}" de ton profil ?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsDeletingGame(true);
+      setAddGameError("");
+      await api.delete(`/api/games/${game.id}`);
+      await fetchProfile();
+    } catch (error) {
+      console.error("Erreur suppression jeu :", error);
+      setAddGameError(
+        error.response?.data?.message ||
+          "Impossible de supprimer ce jeu du profil."
+      );
+    } finally {
+      setIsDeletingGame(false);
+    }
+  };
+
+  const handleAddUserGame = async (payload) => {
+    try {
+      setIsSubmittingAddGame(true);
+      setAddGameError("");
+
+      await api.post("/api/games", payload);
+
+      await fetchProfile();
+      setIsAddGameModalOpen(false);
+    } catch (error) {
+      console.error("Erreur ajout jeu utilisateur :", error);
+      setAddGameError(
+        error.response?.data?.message ||
+          "Impossible d'ajouter ce jeu au profil."
+      );
+      throw error;
+    } finally {
+      setIsSubmittingAddGame(false);
+    }
+  };
+
+  const handleUpdateUserGame = async (payload) => {
+    if (!selectedGame) return;
+
+    try {
+      setIsSubmittingEditGame(true);
+      setAddGameError("");
+
+      await api.patch(`/api/games/${selectedGame.id}`, {
+        skill_level: payload.skill_level,
+        favorite: payload.favorite,
+      });
+
+      await fetchProfile();
+      setIsEditGameModalOpen(false);
+      setSelectedGame(null);
+    } catch (error) {
+      console.error("Erreur modification jeu utilisateur :", error);
+      setAddGameError(
+        error.response?.data?.message ||
+          "Impossible de modifier ce jeu du profil."
+      );
+      throw error;
+    } finally {
+      setIsSubmittingEditGame(false);
+    }
   };
 
   const handleImageUpload = async (e) => {
@@ -136,6 +270,22 @@ export default function ProfilePage() {
     return badges;
   }, [user?.location, user?.created_at, followersCount, friendsCount]);
 
+  const availableGamesWithImages = availableGames.map((game) => ({
+    ...game,
+    cover_img: game.cover_img
+      ? getImageUrl(game.cover_img, imageVersion)
+      : null,
+  }));
+
+  const selectedGameWithImage = selectedGame
+    ? {
+        ...selectedGame,
+        cover_img: selectedGame.cover_img
+          ? getImageUrl(selectedGame.cover_img, imageVersion)
+          : null,
+      }
+    : null;
+
   if (isLoading) {
     return (
       <section className="relative overflow-hidden px-4 py-6 sm:px-6 lg:px-8">
@@ -181,6 +331,9 @@ export default function ProfilePage() {
             gamesCount={gamesCount}
             formatDate={formatDate}
             getImageUrl={(path) => getImageUrl(path, imageVersion)}
+            onOpenAddGameModal={handleOpenAddGameModal}
+            onEditGame={handleOpenEditGameModal}
+            onDeleteGame={handleDeleteGame}
           />
 
           <ProfileSidebar
@@ -216,6 +369,34 @@ export default function ProfilePage() {
         initials={initials}
         handleImageUpload={handleImageUpload}
       />
+
+      <AddUserGameModal
+        isOpen={isAddGameModalOpen}
+        onClose={handleCloseAddGameModal}
+        games={availableGamesWithImages}
+        onSubmit={handleAddUserGame}
+        isSubmitting={isSubmittingAddGame || isLoadingAvailableGames}
+        mode="add"
+      />
+
+      <AddUserGameModal
+        isOpen={isEditGameModalOpen}
+        onClose={handleCloseEditGameModal}
+        games={availableGamesWithImages}
+        onSubmit={handleUpdateUserGame}
+        isSubmitting={isSubmittingEditGame || isLoadingAvailableGames}
+        mode="edit"
+        initialGame={selectedGameWithImage}
+      />
+
+      {addGameError &&
+      (isAddGameModalOpen || isEditGameModalOpen || isDeletingGame) ? (
+        <div className="fixed bottom-4 left-1/2 z-[60] w-full max-w-md -translate-x-1/2 px-4">
+          <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-300 backdrop-blur-md">
+            {addGameError}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
