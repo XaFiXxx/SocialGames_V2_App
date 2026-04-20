@@ -329,6 +329,37 @@ export default function ProfilePage() {
     }
   };
 
+  const handleDeletePost = async (postId) => {
+    const confirmed = window.confirm("Voulez-vous vraiment supprimer ce post ?");
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/api/posts/${postId}`);
+
+      setProfile((prev) => {
+        if (!prev) return prev;
+
+        const updatedPosts = (prev.posts ?? []).filter(
+          (post) => Number(post.id) !== Number(postId)
+        );
+
+        return {
+          ...prev,
+          posts: updatedPosts,
+          meta: {
+            ...prev.meta,
+            posts_count: Math.max(
+              (prev.meta?.posts_count ?? updatedPosts.length) - 1,
+              0
+            ),
+          },
+        };
+      });
+    } catch (error) {
+      console.error("Erreur suppression post profil :", error);
+    }
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -511,6 +542,8 @@ export default function ProfilePage() {
           getFirstImageFromPost={(post) =>
             getFirstImageFromPost(post, imageVersion)
           }
+          authUser={authUser}
+          onDeletePost={handleDeletePost}
         />
       </div>
 
@@ -547,9 +580,7 @@ export default function ProfilePage() {
         onClose={handleCloseAddPlatformModal}
         platforms={availablePlatformsWithImages}
         onSubmit={handleAddUserPlatform}
-        isSubmitting={
-          isSubmittingAddPlatform || isLoadingAvailablePlatforms
-        }
+        isSubmitting={isSubmittingAddPlatform || isLoadingAvailablePlatforms}
         mode="add"
       />
 
@@ -558,9 +589,7 @@ export default function ProfilePage() {
         onClose={handleCloseEditPlatformModal}
         platforms={availablePlatformsWithImages}
         onSubmit={handleUpdateUserPlatform}
-        isSubmitting={
-          isSubmittingEditPlatform || isLoadingAvailablePlatforms
-        }
+        isSubmitting={isSubmittingEditPlatform || isLoadingAvailablePlatforms}
         mode="edit"
         initialPlatform={selectedPlatformWithImage}
       />

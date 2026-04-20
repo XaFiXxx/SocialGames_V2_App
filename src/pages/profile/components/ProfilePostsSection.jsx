@@ -1,7 +1,22 @@
 import FeedPostCard from "../../../components/feed/FeedPostCard";
 import GlassCard from "./GlassCard";
 
-export default function ProfilePostsSection({ posts, postsCount }) {
+export default function ProfilePostsSection({
+  posts,
+  postsCount,
+  authUser,
+  onDeletePost,
+}) {
+  const safePosts = Array.isArray(posts) ? posts : [];
+
+  const postsWithOwnership = safePosts.map((post) => ({
+    ...post,
+    is_owner:
+      typeof post?.is_owner === "boolean"
+        ? post.is_owner
+        : Number(post?.user_id) === Number(authUser?.id),
+  }));
+
   return (
     <GlassCard
       title="Posts récents"
@@ -13,10 +28,14 @@ export default function ProfilePostsSection({ posts, postsCount }) {
         ) : null
       }
     >
-      {posts.length > 0 ? (
+      {postsWithOwnership.length > 0 ? (
         <div className="space-y-4">
-          {posts.map((post) => (
-            <FeedPostCard key={post.id} post={post} />
+          {postsWithOwnership.map((post) => (
+            <FeedPostCard
+              key={post.id}
+              post={post}
+              onPostDeleted={onDeletePost}
+            />
           ))}
         </div>
       ) : (
