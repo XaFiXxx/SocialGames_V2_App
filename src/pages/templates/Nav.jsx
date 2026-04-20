@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { MessageSquare } from "lucide-react";
+import { Mail, MessageSquare, TriangleAlert } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import NotificationsDropdown from "../../components/notifications/NotificationsDropdown";
 import echo from "../../services/echo";
@@ -28,6 +28,8 @@ export default function Navbar() {
   const profileMenuRef = useRef(null);
   const searchRef = useRef(null);
   const receivedMessageIdsRef = useRef(new Set());
+
+  const isEmailVerified = !!user?.email_verified_at;
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -342,6 +344,40 @@ export default function Navbar() {
             />
           </div>
         </div>
+
+        {!isEmailVerified && user && (
+          <div className="border-t border-amber-400/15 bg-[linear-gradient(90deg,rgba(251,191,36,0.12),rgba(34,211,238,0.08))]">
+            <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-amber-400/20 bg-amber-400/10 text-amber-300">
+                  <TriangleAlert size={18} />
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold text-amber-200">
+                    Adresse email non vérifiée
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-amber-100/75">
+                    Certaines fonctionnalités comme publier, suivre, ajouter en
+                    ami ou envoyer des messages sont limitées tant que ton email
+                    n’est pas confirmé.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => navigate("/verify-email")}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-amber-300/20 bg-amber-400/10 px-4 py-2 text-sm font-semibold text-amber-200 transition hover:bg-amber-400/15"
+                >
+                  <Mail size={16} />
+                  Vérifier maintenant
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       <MessageToasts

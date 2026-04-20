@@ -10,4 +10,24 @@ const api = axios.create({
   },
 });
 
+// 🔥 INTERCEPTOR GLOBAL
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status;
+    const message = error.response?.data?.message;
+
+    // 🔒 Email non vérifié
+    if (
+      status === 403 &&
+      message?.toLowerCase().includes("vérifier votre adresse email") &&
+      window.location.pathname !== "/verify-email"
+    ) {
+      window.location.href = "/verify-email";
+    }
+
+    return Promise.reject(error);
+  },
+);
+
 export default api;

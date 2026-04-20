@@ -206,13 +206,6 @@ export default function PublicProfileHero({
                   {badge.label}
                 </span>
               ))}
-
-              <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-[var(--text-main)] backdrop-blur-sm">
-                <ShieldCheck size={14} />
-                {user?.newsletter
-                  ? "Newsletter activée"
-                  : "Newsletter désactivée"}
-              </span>
             </div>
 
             {platforms.length > 0 ? (

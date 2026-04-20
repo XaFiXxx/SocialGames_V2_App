@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import {
   Mail,
@@ -7,8 +7,10 @@ import {
   Gamepad2,
   TriangleAlert,
   User,
+  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../services/api";
 
 function FeaturePill({ icon: Icon, children }) {
   return (
@@ -31,10 +33,63 @@ function GlassCard({ title, text }) {
 export default function VerifyEmailPage() {
   const { refreshUser } = useAuth();
 
+  const [isResending, setIsResending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [feedback, setFeedback] = useState({
+    type: "",
+    message: "",
+  });
+
   useEffect(() => {
     refreshUser();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+
+    const interval = setInterval(() => {
+      setCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [cooldown]);
+
+  const handleResendEmail = async () => {
+    if (isResending || cooldown > 0) return;
+
+    try {
+      setIsResending(true);
+      setFeedback({ type: "", message: "" });
+
+      const response = await api.post("/api/email/verification-notification");
+
+      setFeedback({
+        type: "success",
+        message:
+          response.data?.message ||
+          "Email de vérification renvoyé avec succès.",
+      });
+
+      setCooldown(30);
+    } catch (error) {
+      setFeedback({
+        type: "error",
+        message:
+          error.response?.data?.message ||
+          "Impossible de renvoyer l’email pour le moment.",
+      });
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#060816] text-white">
@@ -174,7 +229,36 @@ export default function VerifyEmailPage() {
                 </div>
               </div>
 
+              {feedback.message && (
+                <div
+                  className={`mt-4 rounded-2xl px-4 py-3 text-sm ${
+                    feedback.type === "success"
+                      ? "border border-emerald-400/20 bg-emerald-400/10 text-emerald-200"
+                      : "border border-red-400/20 bg-red-400/10 text-red-200"
+                  }`}
+                >
+                  {feedback.message}
+                </div>
+              )}
+
               <div className="mt-8 space-y-3">
+                <button
+                  type="button"
+                  onClick={handleResendEmail}
+                  disabled={isResending || cooldown > 0}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white/85 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <RefreshCw
+                    size={16}
+                    className={isResending ? "animate-spin" : ""}
+                  />
+                  {isResending
+                    ? "Renvoi en cours..."
+                    : cooldown > 0
+                    ? `Renvoyer l’email (${cooldown}s)`
+                    : "Renvoyer l’email de confirmation"}
+                </button>
+
                 <Link
                   to="/feed"
                   className="inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[var(--primary)] to-cyan-400 px-4 py-3 text-sm font-semibold text-white shadow-lg transition hover:scale-[1.01]"
