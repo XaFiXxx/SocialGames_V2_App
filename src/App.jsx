@@ -10,6 +10,8 @@ import FeedPage from "./pages/Feed";
 import ProfilePage from "./pages/profile/profile";
 import EditProfilePage from "./pages/profile/Edit";
 import MessagesPage from "./pages/messages/Index";
+import EmailVerifiedPage from "./pages/mails/EmailVerifiedPage";
+import VerifyEmailPage from "./pages/mails/VerifyEmailPage";
 
 import PublicProfile from "./pages/profile/public/PublicProfile";
 
@@ -28,7 +30,6 @@ export default function App() {
 
   return (
     <>
-      {/* 🔥 ICI */}
       <ScrollToTop />
 
       <Routes>
@@ -44,13 +45,25 @@ export default function App() {
         />
 
         <Route
+          path="/login"
           element={
             isAuthenticated ? <Navigate to="/feed" replace /> : <AuthLayout />
           }
         >
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route index element={<LoginPage />} />
         </Route>
+
+        <Route
+          path="/register"
+          element={
+            isAuthenticated ? <Navigate to="/feed" replace /> : <AuthLayout />
+          }
+        >
+          <Route index element={<RegisterPage />} />
+        </Route>
+
+        <Route path="/verify-email" element={<VerifyEmailPage />} />
+        <Route path="/email-verified" element={<EmailVerifiedPage />} />
 
         <Route
           element={

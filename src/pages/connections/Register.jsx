@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import {
   Gamepad2,
   Sparkles,
@@ -29,7 +29,6 @@ function GlassCard({ title, text }) {
 }
 
 export default function RegisterPage() {
-  const navigate = useNavigate();
   const { register } = useAuth();
 
   const [form, setForm] = useState({
@@ -129,35 +128,35 @@ export default function RegisterPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const validationErrors = validateForm();
-    setErrors(validationErrors);
-    setServerError("");
+  const validationErrors = validateForm();
+  setErrors(validationErrors);
+  setServerError("");
 
-    if (Object.keys(validationErrors).length > 0) return;
+  if (Object.keys(validationErrors).length > 0) return;
 
-    try {
-      setIsSubmitting(true);
+  try {
+    setIsSubmitting(true);
 
-      await register(form);
+    await register(form);
 
-      navigate("/login", { replace: true });
-    } catch (error) {
-      console.error(error);
+    window.location.href = "/verify-email";
+  } catch (error) {
+    console.error(error);
 
-      if (error.response?.status === 422) {
-        setErrors(error.response.data.errors || {});
-        setServerError(
-          error.response.data.message || "Certaines données sont invalides."
-        );
-      } else {
-        setServerError("Une erreur est survenue pendant l'inscription.");
-      }
-    } finally {
-      setIsSubmitting(false);
+    if (error.response?.status === 422) {
+      setErrors(error.response.data.errors || {});
+      setServerError(
+        error.response.data.message || "Certaines données sont invalides."
+      );
+    } else {
+      setServerError("Une erreur est survenue pendant l'inscription.");
     }
-  };
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const inputClass = (fieldName) =>
     `w-full rounded-2xl border bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 outline-none backdrop-blur-sm transition ${
