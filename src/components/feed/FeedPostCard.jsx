@@ -1,10 +1,15 @@
+import { useMemo, useState } from "react";
 import {
   MessageCircle,
-  Heart,
   Share2,
   Image as ImageIcon,
   Video,
+  Heart,
+  Flame,
+  Trophy,
+  Trash2,
 } from "lucide-react";
+import api from "../../services/api";
 
 function getImageUrl(path) {
   if (!path) return null;
@@ -63,13 +68,127 @@ function getMediaGridClass(mediaCount) {
   return "grid-cols-2";
 }
 
-export default function FeedPostCard({ post }) {
+function buildReactionState(post) {
+  return {
+    like: post?.reactions_count?.like ?? 0,
+    fire: post?.reactions_count?.fire ?? 0,
+    gg: post?.reactions_count?.gg ?? 0,
+    total: post?.reactions_count?.total ?? 0,
+    userReaction: post?.user_reaction ?? null,
+  };
+}
+
+function getUpdatedReactionState(prev, nextType) {
+  const currentType = prev.userReaction;
+
+  const next = {
+    ...prev,
+    like: prev.like ?? 0,
+    fire: prev.fire ?? 0,
+    gg: prev.gg ?? 0,
+    total: prev.total ?? 0,
+  };
+
+  if (currentType === nextType) {
+    next[nextType] = Math.max((next[nextType] ?? 0) - 1, 0);
+    next.total = Math.max((next.total ?? 0) - 1, 0);
+    next.userReaction = null;
+    return next;
+  }
+
+  if (currentType) {
+    next[currentType] = Math.max((next[currentType] ?? 0) - 1, 0);
+  } else {
+    next.total = (next.total ?? 0) + 1;
+  }
+
+  next[nextType] = (next[nextType] ?? 0) + 1;
+  next.userReaction = nextType;
+
+  return next;
+}
+
+function ReactionButton({
+  icon: Icon,
+  label,
+  type,
+  count,
+  active,
+  onClick,
+  disabled,
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(type)}
+      disabled={disabled}
+      className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+        active
+          ? "bg-white/10 text-[var(--text-main)] ring-1 ring-white/10"
+          : "text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-main)]"
+      } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+      title={label}
+    >
+      <Icon size={16} />
+      {count}
+    </button>
+  );
+}
+
+export default function FeedPostCard({ post, onPostDeleted }) {
   const authorName = getAuthorName(post.user);
   const authorInitials = getAuthorInitials(post.user);
   const avatarSrc = getImageUrl(post?.user?.avatar_url);
   const media = getPostMedia(post);
   const mediaCount = media.length;
   const hasVideo = media.some((item) => isVideoMedia(item));
+
+  const [reactionState, setReactionState] = useState(() =>
+    buildReactionState(post)
+  );
+  const [isReacting, setIsReacting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const commentsCount = useMemo(() => post.comments_count ?? 0, [post]);
+
+  const handleReact = async (type) => {
+    if (isReacting) return;
+
+    const previousState = reactionState;
+    const optimisticState = getUpdatedReactionState(previousState, type);
+
+    setReactionState(optimisticState);
+    setIsReacting(true);
+
+    try {
+      await api.post(`/api/posts/${post.id}/react`, { type });
+    } catch (error) {
+      console.error("Erreur réaction post :", error);
+      setReactionState(previousState);
+    } finally {
+      setIsReacting(false);
+    }
+  };
+
+  const handleDeletePost = async () => {
+    if (isDeleting) return;
+
+    const confirmed = window.confirm(
+      "Voulez-vous vraiment supprimer ce post ?"
+    );
+
+    if (!confirmed) return;
+
+    try {
+      setIsDeleting(true);
+      await api.delete(`/api/posts/${post.id}`);
+      onPostDeleted?.(post.id);
+    } catch (error) {
+      console.error("Erreur suppression post :", error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <article className="overflow-hidden rounded-[30px] border border-white/10 bg-[var(--bg-card)] p-5 shadow-[0_10px_30px_rgba(0,0,0,0.18)]">
@@ -87,44 +206,61 @@ export default function FeedPostCard({ post }) {
         </div>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <h2 className="text-sm font-semibold text-[var(--text-main)]">
-              {authorName}
-            </h2>
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h2 className="text-sm font-semibold text-[var(--text-main)]">
+                  {authorName}
+                </h2>
 
-            <span className="text-sm text-[var(--text-secondary)]">
-              @{post?.user?.username || "username"}
-            </span>
+                <span className="text-sm text-[var(--text-secondary)]">
+                  @{post?.user?.username || "username"}
+                </span>
 
-            <span className="text-sm text-[var(--text-secondary)]">•</span>
+                <span className="text-sm text-[var(--text-secondary)]">•</span>
 
-            <span className="text-sm text-[var(--text-secondary)]">
-              {formatPostTime(post.created_at)}
-            </span>
-          </div>
+                <span className="text-sm text-[var(--text-secondary)]">
+                  {formatPostTime(post.created_at)}
+                </span>
+              </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="rounded-full border border-white/10 bg-[var(--bg-secondary)] px-3 py-1 text-xs font-medium capitalize text-[var(--text-main)]">
-              {post.visibility || "public"}
-            </span>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-white/10 bg-[var(--bg-secondary)] px-3 py-1 text-xs font-medium capitalize text-[var(--text-main)]">
+                  {post.visibility || "public"}
+                </span>
 
-            {post.group_id && (
-              <span className="rounded-full border border-white/10 bg-[var(--bg-secondary)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
-                Groupe
-              </span>
-            )}
+                {post.group_id && (
+                  <span className="rounded-full border border-white/10 bg-[var(--bg-secondary)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
+                    Groupe
+                  </span>
+                )}
 
-            {post.team_id && (
-              <span className="rounded-full border border-white/10 bg-[var(--bg-secondary)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
-                Team
-              </span>
-            )}
+                {post.team_id && (
+                  <span className="rounded-full border border-white/10 bg-[var(--bg-secondary)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
+                    Team
+                  </span>
+                )}
 
-            {mediaCount > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-[var(--bg-secondary)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
-                {hasVideo ? <Video size={12} /> : <ImageIcon size={12} />}
-                {mediaCount} média{mediaCount > 1 ? "s" : ""}
-              </span>
+                {mediaCount > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-[var(--bg-secondary)] px-3 py-1 text-xs font-medium text-[var(--text-secondary)]">
+                    {hasVideo ? <Video size={12} /> : <ImageIcon size={12} />}
+                    {mediaCount} média{mediaCount > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {post.is_owner && (
+              <button
+                type="button"
+                onClick={handleDeletePost}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-2 rounded-xl border border-red-400/15 bg-red-400/10 px-3 py-2 text-sm text-red-300 transition hover:bg-red-400/15 disabled:cursor-not-allowed disabled:opacity-60"
+                title="Supprimer le post"
+              >
+                <Trash2 size={16} />
+                {isDeleting ? "Suppression..." : "Supprimer"}
+              </button>
             )}
           </div>
 
@@ -137,9 +273,7 @@ export default function FeedPostCard({ post }) {
       </div>
 
       {mediaCount > 0 && (
-        <div
-          className={`mt-5 grid gap-3 ${getMediaGridClass(mediaCount)}`}
-        >
+        <div className={`mt-5 grid gap-3 ${getMediaGridClass(mediaCount)}`}>
           {media.map((item) => {
             const mediaUrl = getImageUrl(item?.url);
 
@@ -160,38 +294,64 @@ export default function FeedPostCard({ post }) {
               );
             }
 
-            return (
-              <div
-                key={item.id}
-                className="overflow-hidden rounded-[24px] border border-white/10 bg-[var(--bg-secondary)]"
-              >
-                <img
-                  src={mediaUrl}
-                  alt="Post media"
-                  className="h-full max-h-[520px] w-full object-cover"
-                  loading="lazy"
-                />
-              </div>
-            );
+            if (isImageMedia(item)) {
+              return (
+                <div
+                  key={item.id}
+                  className="overflow-hidden rounded-[24px] border border-white/10 bg-[var(--bg-secondary)]"
+                >
+                  <img
+                    src={mediaUrl}
+                    alt="Post media"
+                    className="h-full max-h-[520px] w-full object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              );
+            }
+
+            return null;
           })}
         </div>
       )}
 
       <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-white/10 pt-4">
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--bg-secondary)] hover:text-[var(--text-main)]"
-        >
-          <Heart size={16} />
-          {post.likes_count ?? 0}
-        </button>
+        <ReactionButton
+          icon={Heart}
+          label="Like"
+          type="like"
+          count={reactionState.like}
+          active={reactionState.userReaction === "like"}
+          onClick={handleReact}
+          disabled={isReacting}
+        />
+
+        <ReactionButton
+          icon={Flame}
+          label="Fire"
+          type="fire"
+          count={reactionState.fire}
+          active={reactionState.userReaction === "fire"}
+          onClick={handleReact}
+          disabled={isReacting}
+        />
+
+        <ReactionButton
+          icon={Trophy}
+          label="GG"
+          type="gg"
+          count={reactionState.gg}
+          active={reactionState.userReaction === "gg"}
+          onClick={handleReact}
+          disabled={isReacting}
+        />
 
         <button
           type="button"
           className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--bg-secondary)] hover:text-[var(--text-main)]"
         >
           <MessageCircle size={16} />
-          {post.comments_count ?? 0}
+          {commentsCount}
         </button>
 
         <button

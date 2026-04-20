@@ -55,7 +55,17 @@ export default function FeedPage() {
                 Aucune publication pour le moment.
               </div>
             ) : (
-              posts.map((post) => <FeedPostCard key={post.id} post={post} />)
+              posts.map((post) => (
+                <FeedPostCard
+                  key={post.id}
+                  post={post}
+                  onPostDeleted={(postId) => {
+                    setPosts((prev) =>
+                      prev.filter((item) => item.id !== postId)
+                    );
+                  }}
+                />
+              ))
             )}
           </div>
         </main>
