@@ -316,6 +316,7 @@ export default function ProfilePage() {
           followingCount={followingCount}
           friendsCount={friendsCount}
           gamesCount={gamesCount}
+          platformsCount={platformsCount}
           profileBadges={profileBadges}
           openModal={openModal}
         />
@@ -329,6 +330,7 @@ export default function ProfilePage() {
             followingCount={followingCount}
             friendsCount={friendsCount}
             gamesCount={gamesCount}
+            platformsCount={platformsCount}
             formatDate={formatDate}
             getImageUrl={(path) => getImageUrl(path, imageVersion)}
             onOpenAddGameModal={handleOpenAddGameModal}

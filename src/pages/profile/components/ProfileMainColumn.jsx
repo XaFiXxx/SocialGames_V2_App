@@ -22,6 +22,7 @@ export default function ProfileMainColumn({
   followingCount,
   friendsCount,
   gamesCount,
+  platformsCount,
   formatDate,
   getImageUrl,
   onOpenAddGameModal,
@@ -56,38 +57,97 @@ export default function ProfileMainColumn({
         </div>
       </GlassCard>
 
-      <GlassCard title="Plateformes">
-        {platforms.length > 0 ? (
-          <div className="flex flex-wrap gap-3">
-            {platforms.map((platform) => (
-              <div
-                key={platform.id}
-                className="inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 backdrop-blur-sm"
-              >
-                <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-white/5">
-                  {platform.logo ? (
-                    <img
-                      src={getImageUrl(platform.logo)}
-                      alt={platform.name}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <Monitor
-                      size={18}
-                      className="text-[var(--text-secondary)]"
-                    />
-                  )}
-                </div>
+      <GlassCard
+        title="Plateformes"
+        action={
+          <div className="flex items-center gap-3">
+            {platformsCount > 0 ? (
+              <span className="text-xs text-[var(--text-secondary)]">
+                {platformsCount} au total
+              </span>
+            ) : null}
 
-                <span className="text-sm font-medium text-[var(--text-main)]">
-                  {platform.name}
-                </span>
-              </div>
-            ))}
+            <button
+              type="button"
+              onClick={onOpenAddGameModal}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-[var(--text-main)] transition hover:bg-white/10"
+            >
+              <Plus size={14} />
+              Ajouter un jeu
+            </button>
+          </div>
+        }
+      >
+        {platforms.length > 0 ? (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {platforms.map((platform) => {
+              return (
+                <div
+                  key={platform.id}
+                  className="overflow-hidden rounded-[24px] border border-white/10 bg-white/5 backdrop-blur-sm"
+                >
+                  <div className="h-44 w-full overflow-hidden bg-white/5">
+                    {platform.logo ? (
+                      <img
+                        src={getImageUrl(platform.logo)}
+                        alt={platform.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center">
+                        <Gamepad2
+                          size={28}
+                          className="text-[var(--text-secondary)]"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="line-clamp-1 text-sm font-semibold text-[var(--text-main)]">
+                          {platform.name}
+                        </p>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onEditGame?.(platform)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[var(--text-secondary)] transition hover:bg-white/10 hover:text-[var(--text-main)]"
+                          aria-label={`Modifier ${platform.name}`}
+                        >
+                          <Pencil size={14} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => onDeleteGame?.(platform)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-[var(--text-secondary)] transition hover:border-red-400/20 hover:bg-red-500/10 hover:text-red-300"
+                          aria-label={`Supprimer ${platform.name}`}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-[var(--text-secondary)]">
-            Aucune plateforme ajoutée pour le moment.
+            <p>Aucune plateforme ajoutée au profil pour le moment.</p>
+
+            <button
+              type="button"
+              onClick={onOpenAddGameModal}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm font-medium text-[var(--text-main)] transition hover:bg-white/10"
+            >
+              <Plus size={16} />
+              Ajouter ma première plateforme
+            </button>
           </div>
         )}
       </GlassCard>
