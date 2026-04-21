@@ -8,6 +8,7 @@ import {
   Flame,
   Trophy,
   Trash2,
+  Send,
 } from "lucide-react";
 import api from "../../services/api";
 
@@ -135,6 +136,58 @@ function ReactionButton({
   );
 }
 
+function CommentItem({ comment, onDelete }) {
+  const authorName = getAuthorName(comment.user);
+  const authorInitials = getAuthorInitials(comment.user);
+  const avatarSrc = getImageUrl(comment?.user?.avatar_url);
+
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
+      <div className="flex items-start gap-3">
+        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-r from-[var(--primary)] to-cyan-400 text-sm font-semibold text-white shadow-md">
+          {avatarSrc ? (
+            <img
+              src={avatarSrc}
+              alt={authorName}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            authorInitials
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-[var(--text-main)]">
+                {authorName}
+              </p>
+              <p className="text-xs text-[var(--text-secondary)]">
+                {formatPostTime(comment.created_at)}
+              </p>
+            </div>
+
+            {comment.is_owner && (
+              <button
+                type="button"
+                onClick={() => onDelete(comment.id)}
+                className="inline-flex items-center gap-1 rounded-xl border border-red-400/15 bg-red-400/10 px-2.5 py-1.5 text-xs font-medium text-red-300 transition hover:bg-red-400/15"
+              >
+                <Trash2 size={13} />
+                Supprimer
+              </button>
+            )}
+          </div>
+
+          <p className="mt-2 whitespace-pre-line text-sm leading-6 text-[var(--text-main)]">
+            {comment.content}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function FeedPostCard({ post, onPostDeleted }) {
   const authorName = getAuthorName(post.user);
   const authorInitials = getAuthorInitials(post.user);
@@ -149,7 +202,14 @@ export default function FeedPostCard({ post, onPostDeleted }) {
   const [isReacting, setIsReacting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const commentsCount = useMemo(() => post.comments_count ?? 0, [post]);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [commentInput, setCommentInput] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentError, setCommentError] = useState("");
+
+  const [commentsCount, setCommentsCount] = useState(post.comments_count ?? 0);
 
   const handleReact = async (type) => {
     if (isReacting) return;
@@ -187,6 +247,81 @@ export default function FeedPostCard({ post, onPostDeleted }) {
       console.error("Erreur suppression post :", error);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const fetchComments = async () => {
+    try {
+      setIsLoadingComments(true);
+      setCommentError("");
+
+      const response = await api.get(`/api/posts/${post.id}/comments`);
+      setComments(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error("Erreur chargement commentaires :", error);
+      setCommentError("Impossible de charger les commentaires.");
+      setComments([]);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
+  const handleToggleComments = async () => {
+    const nextOpen = !isCommentsOpen;
+    setIsCommentsOpen(nextOpen);
+
+    if (nextOpen && comments.length === 0 && !isLoadingComments) {
+      await fetchComments();
+    }
+  };
+
+  const handleSubmitComment = async (e) => {
+    e.preventDefault();
+
+    const trimmed = commentInput.trim();
+    if (!trimmed || isSubmittingComment) return;
+
+    try {
+      setIsSubmittingComment(true);
+      setCommentError("");
+
+      const response = await api.post(`/api/posts/${post.id}/comments`, {
+        content: trimmed,
+      });
+
+      const newComment = response.data?.comment;
+      if (newComment) {
+        setComments((prev) => [newComment, ...prev]);
+        setCommentsCount((prev) => prev + 1);
+      }
+
+      setCommentInput("");
+      setIsCommentsOpen(true);
+    } catch (error) {
+      console.error("Erreur ajout commentaire :", error);
+      setCommentError(
+        error.response?.data?.message ||
+          "Impossible d’ajouter le commentaire."
+      );
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    const confirmed = window.confirm(
+      "Voulez-vous vraiment supprimer ce commentaire ?"
+    );
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/api/comments/${commentId}`);
+      setComments((prev) =>
+        prev.filter((comment) => Number(comment.id) !== Number(commentId))
+      );
+      setCommentsCount((prev) => Math.max(prev - 1, 0));
+    } catch (error) {
+      console.error("Erreur suppression commentaire :", error);
     }
   };
 
@@ -348,7 +483,12 @@ export default function FeedPostCard({ post, onPostDeleted }) {
 
         <button
           type="button"
-          className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-[var(--text-secondary)] transition hover:bg-[var(--bg-secondary)] hover:text-[var(--text-main)]"
+          onClick={handleToggleComments}
+          className={`inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition ${
+            isCommentsOpen
+              ? "bg-white/10 text-[var(--text-main)] ring-1 ring-white/10"
+              : "text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--text-main)]"
+          }`}
         >
           <MessageCircle size={16} />
           {commentsCount}
@@ -362,6 +502,57 @@ export default function FeedPostCard({ post, onPostDeleted }) {
           0
         </button>
       </div>
+
+      {isCommentsOpen && (
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <form onSubmit={handleSubmitComment} className="mb-4">
+            <div className="flex items-end gap-3">
+              <textarea
+                value={commentInput}
+                onChange={(e) => setCommentInput(e.target.value)}
+                placeholder="Écrire un commentaire..."
+                rows={2}
+                className="min-h-[72px] w-full resize-none rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-[var(--text-main)] outline-none transition placeholder:text-[var(--text-secondary)] focus:border-[var(--primary)]"
+              />
+
+              <button
+                type="submit"
+                disabled={isSubmittingComment || !commentInput.trim()}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-r from-[var(--primary)] to-cyan-400 text-white shadow-lg transition hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60"
+                title="Envoyer le commentaire"
+              >
+                <Send size={16} />
+              </button>
+            </div>
+          </form>
+
+          {commentError && (
+            <div className="mb-4 rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+              {commentError}
+            </div>
+          )}
+
+          {isLoadingComments ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-[var(--text-secondary)]">
+              Chargement des commentaires...
+            </div>
+          ) : comments.length > 0 ? (
+            <div className="space-y-3">
+              {comments.map((comment) => (
+                <CommentItem
+                  key={comment.id}
+                  comment={comment}
+                  onDelete={handleDeleteComment}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-[var(--text-secondary)]">
+              Aucun commentaire pour le moment.
+            </div>
+          )}
+        </div>
+      )}
     </article>
   );
 }
