@@ -21,7 +21,7 @@ export default function PublicProfile() {
   const [modal, setModal] = useState({ type: null, isOpen: false });
 
   const openModal = (type) => setModal({ type, isOpen: true });
-  const closeModal = () => setModal({ type, isOpen: false });
+  const closeModal = () => setModal({ type: null, isOpen: false });
 
   const getImageUrl = (path) => {
     if (!path) return null;

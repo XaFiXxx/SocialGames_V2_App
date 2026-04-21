@@ -285,37 +285,6 @@ export default function ProfileMainColumn({
           </div>
         )}
       </GlassCard>
-
-      <GlassCard title="Réseau">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-widest text-[var(--text-secondary)]">
-              Followers
-            </p>
-            <p className="mt-3 text-3xl font-black text-[var(--text-main)]">
-              {followersCount}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-widest text-[var(--text-secondary)]">
-              Abonnements
-            </p>
-            <p className="mt-3 text-3xl font-black text-[var(--text-main)]">
-              {followingCount}
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-widest text-[var(--text-secondary)]">
-              Amis
-            </p>
-            <p className="mt-3 text-3xl font-black text-[var(--text-main)]">
-              {friendsCount}
-            </p>
-          </div>
-        </div>
-      </GlassCard>
     </div>
   );
 }
