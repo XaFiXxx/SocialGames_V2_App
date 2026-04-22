@@ -11,7 +11,7 @@ const echo = new Echo({
   wsHost: import.meta.env.VITE_REVERB_HOST || "127.0.0.1",
   wsPort: Number(import.meta.env.VITE_REVERB_PORT || 8080),
   wssPort: Number(import.meta.env.VITE_REVERB_PORT || 8080),
-  forceTLS: false,
+  forceTLS: true,
   enabledTransports: ["ws", "wss"],
 
   authorizer: (channel) => ({
