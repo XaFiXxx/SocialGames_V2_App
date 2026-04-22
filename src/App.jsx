@@ -7,7 +7,7 @@ import AppLayout from "./layouts/AppLayout";
 import LoginPage from "./pages/connections/Login";
 import RegisterPage from "./pages/connections/Register";
 import FeedPage from "./pages/Feed";
-import ProfilePage from "./pages/profile/profile";
+import ProfilePage from "./pages/profile/Profile";
 import EditProfilePage from "./pages/profile/Edit";
 import MessagesPage from "./pages/messages/Index";
 import EmailVerifiedPage from "./pages/mails/EmailVerifiedPage";

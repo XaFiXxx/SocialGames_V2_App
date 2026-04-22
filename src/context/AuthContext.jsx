@@ -9,7 +9,7 @@ export function AuthProvider({ children }) {
 
   const refreshUser = async () => {
     try {
-      const response = await api.get("/api/user");
+      const response = await api.get("/user");
       setUser(response.data);
       return response.data;
     } catch (error) {
@@ -34,19 +34,20 @@ export function AuthProvider({ children }) {
 
   const register = async (payload) => {
     await api.get("/sanctum/csrf-cookie");
-    const response = await api.post("/api/register", payload);
+    const response = await api.post("/register", payload);
+    setUser(response.data.user);
     return response.data;
   };
 
   const login = async (payload) => {
     await api.get("/sanctum/csrf-cookie");
-    const response = await api.post("/api/login", payload);
+    const response = await api.post("/login", payload);
     setUser(response.data.user);
     return response.data;
   };
 
   const logout = async () => {
-    await api.post("/api/logout");
+    await api.post("/logout");
     setUser(null);
   };
 
