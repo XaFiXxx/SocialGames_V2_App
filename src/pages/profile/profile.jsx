@@ -18,7 +18,7 @@ import {
   memberSince,
   getPostMedia,
   getFirstImageFromPost,
-} from "./utils/profileHelpers";
+} from "./utils/ProfileHelpers";
 
 export default function ProfilePage() {
   const { user: authUser, refreshUser } = useAuth();
